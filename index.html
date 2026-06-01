@@ -447,147 +447,178 @@ class Player {
     g.save(); g.translate(x+this.w/2,y);
     if(this.facing<0)g.scale(-1,1);
     g.translate(-this.w/2,0);
-    const cx=this.w/2;
-    // walk-frame offsets matching the 4-pose sprite sheet
-    // 0=idle(sword raised), 1=walk step R, 2=mid, 3=walk step L
-    let rLeg=0,lLeg=0,rArm=0,lArm=0,bodyBob=0;
+    const cx=this.w/2; // =24
+
+    // Animation frame offsets (4-frame walk cycle)
+    let rLeg=0,lLeg=0,rArm=0,lArm=0,bob=0;
     switch(this.walkFrame){
-      case 0: rLeg=0;  lLeg=0;  rArm=0;  lArm=0;  bodyBob=0;  break;
-      case 1: rLeg=-7; lLeg=5;  rArm=5;  lArm=-6; bodyBob=-1; break;
-      case 2: rLeg=0;  lLeg=0;  rArm=0;  lArm=0;  bodyBob=1;  break;
-      case 3: rLeg=5;  lLeg=-7; rArm=-6; lArm=5;  bodyBob=-1; break;
+      case 1: rLeg=-9; lLeg=7; rArm=7; lArm=-8; bob=-2; break;
+      case 2: bob=2; break;
+      case 3: rLeg=7; lLeg=-9; rArm=-8; lArm=7; bob=-2; break;
     }
-    // Attack pose: wide stance like bottom-right sprite
-    if(this.attacking>0){ rLeg=4; lLeg=-4; rArm=-4; lArm=8; bodyBob=2; }
+    if(this.attacking>0){ rLeg=5; lLeg=-5; rArm=-2; lArm=6; bob=0; }
 
-    // ── SHADOW ──
-    g.fillStyle='rgba(0,0,0,0.18)';
-    g.beginPath(); g.ellipse(cx,62,14,4,0,0,Math.PI*2); g.fill();
+    // ═══ SHADOW ═══
+    g.fillStyle='rgba(0,0,0,0.15)';
+    g.beginPath(); g.ellipse(cx,72,17,4,0,0,Math.PI*2); g.fill();
 
-    // ── LEFT LEG (back) ──
-    g.fillStyle='#c62828';
-    g.fillRect(cx-12, 38+bodyBob+lLeg, 12, 18-lLeg);
-    // left shoe + cuff
-    g.fillStyle='#37474f'; g.fillRect(cx-14, 54+bodyBob+lLeg, 14, 8);
-    g.fillStyle='#fb8c00'; g.fillRect(cx-14, 52+bodyBob+lLeg, 14, 4); // orange cuff
-    g.fillStyle='#f8c9a4'; g.fillRect(cx-13, 51+bodyBob+lLeg, 12, 3); // light trim above cuff
-    // yellow star on left leg
-    drawStar(g, cx-6, 46+bodyBob+lLeg, 4.5, '#ffd600');
+    // ═══ LEFT LEG (back, darker red) ═══
+    g.fillStyle='#b71c1c';
+    g.fillRect(cx-14, 42+bob+lLeg, 13, 22);
+    // Left shoe
+    g.fillStyle='#1a2744'; g.fillRect(cx-16, 62+bob+lLeg, 17, 9);
+    g.fillStyle='#e88500'; g.fillRect(cx-16, 60+bob+lLeg, 17, 5); // thick orange cuff
+    // Left leg decoration: YELLOW STAR
+    drawStar(g, cx-7, 52+bob+lLeg, 5.5, '#ffd600');
 
-    // ── RIGHT LEG (front) ──
-    g.fillStyle='#d32f2f';
-    g.fillRect(cx+0, 38+bodyBob+rLeg, 12, 18-rLeg);
-    // right shoe + cuff
-    g.fillStyle='#37474f'; g.fillRect(cx-1, 54+bodyBob+rLeg, 14, 8);
-    g.fillStyle='#fb8c00'; g.fillRect(cx-1, 52+bodyBob+rLeg, 14, 4);
-    g.fillStyle='#f8c9a4'; g.fillRect(cx, 51+bodyBob+rLeg, 12, 3);
-    // blue cross on right leg
+    // ═══ RIGHT LEG (front, brighter red) ═══
+    g.fillStyle='#cc1c1c';
+    g.fillRect(cx+1, 42+bob+rLeg, 13, 22);
+    // Right shoe
+    g.fillStyle='#1a2744'; g.fillRect(cx-1, 62+bob+rLeg, 17, 9);
+    g.fillStyle='#e88500'; g.fillRect(cx-1, 60+bob+rLeg, 17, 5); // thick orange cuff
+    // Right leg decoration: BLUE CROSS (+)
     g.fillStyle='#42a5f5';
-    g.fillRect(cx+4, 43+bodyBob+rLeg, 4, 8);
-    g.fillRect(cx+2, 45+bodyBob+rLeg, 8, 4);
+    g.fillRect(cx+4, 48+bob+rLeg, 11, 4);  // horizontal
+    g.fillRect(cx+8, 44+bob+rLeg, 4, 12);  // vertical
 
-    // ── BODY – blue shirt ──
-    const shirtColor = Inventory.armor ? ITEM_DEFS[Inventory.armor].color : '#1565c0';
-    g.fillStyle=shirtColor;
-    g.fillRect(cx-14, 17+bodyBob, 28, 23);
-    // shirt collar/cuffs in slightly lighter blue
-    g.fillStyle=Inventory.armor?shirtColor:'#1976d2';
-    g.fillRect(cx-14, 17+bodyBob, 28, 4);  // collar band
-    g.fillRect(cx-14, 36+bodyBob, 28, 4);  // bottom band
+    // ═══ SHIRT (blue base) ═══
+    const armor=Inventory.armor?ITEM_DEFS[Inventory.armor]:null;
+    const sc=armor?armor.color:'#1455b5';
+    g.fillStyle=sc;
+    g.fillRect(cx-16, 20+bob, 32, 24); // main body
+    g.fillRect(cx-13, 40+bob, 26, 5);  // shirt hem (slight overlap on pants)
 
-    // fire-truck pattern on shirt (3 small trucks)
-    if(!Inventory.armor){
-      // truck 1
-      g.fillStyle='#e53935'; g.fillRect(cx-11,22+bodyBob,8,5);
-      g.fillStyle='#ff7043'; g.fillRect(cx-11,20+bodyBob,6,4);
-      g.fillStyle='#ffeb3b'; g.fillRect(cx-10,21+bodyBob,2,2);
-      g.fillStyle='#212121'; g.beginPath(); g.arc(cx-9,27+bodyBob,1.5,0,7); g.arc(cx-5,27+bodyBob,1.5,0,7); g.fill();
-      // truck 2
-      g.fillStyle='#e53935'; g.fillRect(cx+3,22+bodyBob,8,5);
-      g.fillStyle='#ff7043'; g.fillRect(cx+3,20+bodyBob,6,4);
-      g.fillStyle='#ffeb3b'; g.fillRect(cx+4,21+bodyBob,2,2);
-      g.fillStyle='#212121'; g.beginPath(); g.arc(cx+5,27+bodyBob,1.5,0,7); g.arc(cx+9,27+bodyBob,1.5,0,7); g.fill();
-      // truck 3 (smaller, bottom center)
-      g.fillStyle='#e53935'; g.fillRect(cx-4,31+bodyBob,8,4);
-      g.fillStyle='#ff7043'; g.fillRect(cx-4,29+bodyBob,5,3);
-      g.fillStyle='#212121'; g.beginPath(); g.arc(cx-2,35+bodyBob,1.2,0,7); g.arc(cx+2,35+bodyBob,1.2,0,7); g.fill();
+    if(!armor){
+      // ─ ONE large fire truck centered on shirt ─
+      // Truck body (red rectangle)
+      g.fillStyle='#e53935';
+      g.fillRect(cx-12, 25+bob, 24, 13);
+      // Cab section (left side, slightly taller)
+      g.fillStyle='#c62828';
+      g.fillRect(cx-12, 22+bob, 11, 16);
+      // Windshield (light blue rectangle)
+      g.fillStyle='#b3e5fc';
+      g.fillRect(cx-11, 23+bob, 8, 7);
+      // Headlight
+      g.fillStyle='#ffee58'; g.fillRect(cx-12, 32+bob, 3, 3);
+      // Rear windows
+      g.fillStyle='rgba(180,230,255,0.6)'; g.fillRect(cx+1, 26+bob, 5, 5);
+      // Ladder on roof
+      g.fillStyle='#bf8c00';
+      g.fillRect(cx-1, 22+bob, 13, 2);
+      g.fillStyle='#a07800';
+      for(let li=0;li<4;li++){ g.fillRect(cx+li*3, 22+bob, 2, 4); }
+      // Wheels (large dark circles)
+      g.fillStyle='#111';
+      g.beginPath(); g.arc(cx-7, 38+bob, 4, 0, Math.PI*2); g.fill();
+      g.beginPath(); g.arc(cx+9, 38+bob, 4, 0, Math.PI*2); g.fill();
+      g.fillStyle='#555';
+      g.beginPath(); g.arc(cx-7, 38+bob, 2, 0, Math.PI*2); g.fill();
+      g.beginPath(); g.arc(cx+9, 38+bob, 2, 0, Math.PI*2); g.fill();
+      // Gold stars scattered on shirt
+      g.fillStyle='#ffc400';
+      drawStar(g, cx+12, 24+bob, 3.5, '#ffc400');
+      drawStar(g, cx-9, 34+bob, 2.8, '#ffc400');
+      // Red collar + hem trim
+      g.fillStyle='#e53935';
+      g.fillRect(cx-16, 20+bob, 32, 3);
+      g.fillRect(cx-16, 41+bob, 32, 3);
     } else {
-      g.fillStyle='rgba(255,255,255,0.18)'; g.fillRect(cx-4,20+bodyBob,8,18);
+      g.fillStyle='rgba(255,255,255,0.2)'; g.fillRect(cx-4,22+bob,8,20);
     }
 
-    // ── ARMS ──
-    g.fillStyle=shirtColor;
-    g.fillRect(cx-19, 19+bodyBob+lArm, 7, 16);  // left arm
-    g.fillRect(cx+12, 19+bodyBob+rArm, 7, 16);  // right arm
-    // sleeve cuffs
-    g.fillStyle=Inventory.armor?shirtColor:'#1976d2';
-    g.fillRect(cx-19, 32+bodyBob+lArm, 7, 3);
-    g.fillRect(cx+12, 32+bodyBob+rArm, 7, 3);
-    // hands (peach)
-    g.fillStyle='#f8c9a4';
-    g.fillRect(cx-19, 34+bodyBob+lArm, 7, 5);
-    g.fillRect(cx+12, 34+bodyBob+rArm, 7, 5);
+    // ═══ ARMS ═══
+    g.fillStyle=sc;
+    g.fillRect(cx-22, 21+bob+lArm, 8, 18); // left arm
+    g.fillRect(cx+14, 21+bob+rArm, 8, 18); // right arm
+    // Red wrist cuff
+    g.fillStyle=armor?sc:'#e53935';
+    g.fillRect(cx-22, 36+bob+lArm, 8, 3);
+    g.fillRect(cx+14, 36+bob+rArm, 8, 3);
+    // Hands
+    g.fillStyle='#f5c090';
+    g.beginPath(); g.ellipse(cx-18, 42+bob+lArm, 5, 4, 0, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cx+18, 42+bob+rArm, 5, 4, 0, 0, Math.PI*2); g.fill();
 
-    // ── HEAD (big, round, toddler proportions) ──
-    g.fillStyle='#f8c9a4';
-    g.beginPath(); g.arc(cx, 8+bodyBob, 15, 0, Math.PI*2); g.fill();
-    // ear left
-    g.fillStyle='#f0b898'; g.beginPath(); g.arc(cx-14, 10+bodyBob, 4, 0, Math.PI*2); g.fill();
-    // ear right
-    g.beginPath(); g.arc(cx+14, 10+bodyBob, 4, 0, Math.PI*2); g.fill();
+    // ═══ HEAD ═══
+    // Neck
+    g.fillStyle='#f0b070'; g.fillRect(cx-5, 18+bob, 10, 5);
+    // Head circle (large – toddler proportion)
+    g.fillStyle='#f5c090';
+    g.beginPath(); g.arc(cx, 6+bob, 18, 0, Math.PI*2); g.fill();
+    // Left ear
+    g.fillStyle='#edaa6a';
+    g.beginPath(); g.ellipse(cx-17, 8+bob, 4, 6, 0.3, 0, Math.PI*2); g.fill();
+    g.fillStyle='#f5c090';
+    g.beginPath(); g.ellipse(cx-16, 8+bob, 2.2, 4, 0.3, 0, Math.PI*2); g.fill();
+    // Right ear
+    g.fillStyle='#edaa6a';
+    g.beginPath(); g.ellipse(cx+17, 8+bob, 4, 6, -0.3, 0, Math.PI*2); g.fill();
+    g.fillStyle='#f5c090';
+    g.beginPath(); g.ellipse(cx+16, 8+bob, 2.2, 4, -0.3, 0, Math.PI*2); g.fill();
 
-    // ── FACE ──
-    // rosy cheeks
-    g.fillStyle='rgba(240,100,100,0.5)';
-    g.beginPath(); g.arc(cx-8, 13+bodyBob, 4, 0, Math.PI*2); g.fill();
-    g.beginPath(); g.arc(cx+8, 13+bodyBob, 4, 0, Math.PI*2); g.fill();
-    // whites of eyes
-    g.fillStyle='#fff';
-    g.beginPath(); g.ellipse(cx-5, 7+bodyBob, 3.5, 4, 0, 0, Math.PI*2); g.fill();
-    g.beginPath(); g.ellipse(cx+5, 7+bodyBob, 3.5, 4, 0, 0, Math.PI*2); g.fill();
-    // iris (blue)
-    g.fillStyle='#1e88e5';
-    g.beginPath(); g.arc(cx-5, 8+bodyBob, 2.2, 0, Math.PI*2); g.fill();
-    g.beginPath(); g.arc(cx+5, 8+bodyBob, 2.2, 0, Math.PI*2); g.fill();
-    // pupil
+    // ═══ FACE ═══
+    // Eyebrows
+    g.strokeStyle='#6b3a00'; g.lineWidth=2;
+    g.beginPath(); g.arc(cx-6, 1+bob, 5, Math.PI*1.15, Math.PI*1.85); g.stroke();
+    g.beginPath(); g.arc(cx+6, 1+bob, 5, Math.PI*1.15, Math.PI*1.85); g.stroke();
+    // Eye whites (large oval – chibi style)
+    g.fillStyle='#ffffff';
+    g.beginPath(); g.ellipse(cx-6, 6+bob, 5.5, 6, 0, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cx+6, 6+bob, 5.5, 6, 0, 0, Math.PI*2); g.fill();
+    // Iris (blue)
+    g.fillStyle='#1565c0';
+    g.beginPath(); g.arc(cx-6, 7+bob, 3.8, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx+6, 7+bob, 3.8, 0, Math.PI*2); g.fill();
+    // Pupil
     g.fillStyle='#000';
-    g.beginPath(); g.arc(cx-5, 8+bodyBob, 1.1, 0, Math.PI*2); g.fill();
-    g.beginPath(); g.arc(cx+5, 8+bodyBob, 1.1, 0, Math.PI*2); g.fill();
-    // eye shine
-    g.fillStyle='rgba(255,255,255,0.8)';
-    g.beginPath(); g.arc(cx-4, 7+bodyBob, 0.8, 0, Math.PI*2); g.fill();
-    g.beginPath(); g.arc(cx+6, 7+bodyBob, 0.8, 0, Math.PI*2); g.fill();
-    // big open smile with teeth (matching sprite)
-    g.fillStyle='#e53935';
-    g.beginPath(); g.arc(cx, 13+bodyBob, 5.5, 0, Math.PI); g.fill();
-    g.fillStyle='#fff';
-    g.fillRect(cx-5, 13+bodyBob, 10, 3);
-    g.strokeStyle='rgba(200,50,50,0.5)'; g.lineWidth=0.8;
-    for(let t=-1;t<=1;t++){ g.beginPath(); g.moveTo(cx+t*2.5,13+bodyBob); g.lineTo(cx+t*2.5,16+bodyBob); g.stroke(); }
-    // nose dot
-    g.fillStyle='rgba(200,100,80,0.6)'; g.beginPath(); g.arc(cx, 11+bodyBob, 1.4, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx-6, 7.5+bob, 2.2, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx+6, 7.5+bob, 2.2, 0, Math.PI*2); g.fill();
+    // Shine dots
+    g.fillStyle='rgba(255,255,255,0.95)';
+    g.beginPath(); g.arc(cx-4.5, 5.5+bob, 1.5, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx+7.5, 5.5+bob, 1.5, 0, Math.PI*2); g.fill();
+    // Rosy cheeks (large, soft)
+    g.fillStyle='rgba(255,110,90,0.38)';
+    g.beginPath(); g.ellipse(cx-12, 13+bob, 6, 4, -0.15, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cx+12, 13+bob, 6, 4, 0.15, 0, Math.PI*2); g.fill();
+    // Nose
+    g.fillStyle='rgba(180,90,50,0.45)';
+    g.beginPath(); g.ellipse(cx, 11+bob, 2, 1.4, 0, 0, Math.PI*2); g.fill();
+    // Open smile – dark red background
+    g.fillStyle='#880000';
+    g.beginPath(); g.arc(cx, 16+bob, 8, 0, Math.PI); g.fill();
+    // Teeth bar (white)
+    g.fillStyle='#ffffff';
+    g.beginPath(); g.ellipse(cx, 14+bob, 6.5, 3, 0, 0, Math.PI*2); g.fill();
+    // Upper lip
+    g.fillStyle='#cc3030';
+    g.beginPath(); g.arc(cx, 13+bob, 7.5, Math.PI*1.08, Math.PI*1.92); g.fill();
 
-    // ── HAIR (golden, voluminous, fluffy curls – matching sprite) ──
-    // Dark base
-    g.fillStyle='#b8860b';
-    g.beginPath(); g.arc(cx, -4+bodyBob, 16, Math.PI*0.9, Math.PI*2.1); g.fill();
-    g.beginPath(); g.arc(cx-14, 3+bodyBob, 5, 0, Math.PI*2); g.fill();
-    g.beginPath(); g.arc(cx+14, 3+bodyBob, 5, 0, Math.PI*2); g.fill();
-    // Golden mid layer
-    g.fillStyle='#c8922a';
-    // big fluffy clumps
-    const clumps=[{x:cx-12,y:bodyBob-1,r:5.5},{x:cx-7,y:bodyBob-7,r:6},{x:cx,y:bodyBob-9,r:6.5},
-                  {x:cx+7,y:bodyBob-7,r:6},{x:cx+12,y:bodyBob-1,r:5.5}];
-    for(const c of clumps){ g.beginPath(); g.arc(c.x,c.y,c.r,0,Math.PI*2); g.fill(); }
-    // Highlight / bright tips
-    g.fillStyle='#e8c040';
-    const hiClumps=[{x:cx-8,y:bodyBob-8,r:3.5},{x:cx,y:bodyBob-11,r:4},{x:cx+8,y:bodyBob-8,r:3.5}];
-    for(const c of hiClumps){ g.beginPath(); g.arc(c.x,c.y,c.r,0,Math.PI*2); g.fill(); }
-    // Very bright highlights on tips
-    g.fillStyle='#f5d060';
-    g.beginPath(); g.arc(cx, bodyBob-12, 2.5, 0, Math.PI*2); g.fill();
-    g.beginPath(); g.arc(cx-7, bodyBob-9, 2, 0, Math.PI*2); g.fill();
-    g.beginPath(); g.arc(cx+7, bodyBob-9, 2, 0, Math.PI*2); g.fill();
+    // ═══ HAIR (golden curly, compact, matches sprite) ═══
+    // Dark root base (brown, fills skull)
+    g.fillStyle='#7a4800';
+    g.beginPath(); g.arc(cx, -2+bob, 18, Math.PI*0.92, Math.PI*2.08); g.fill();
+    g.beginPath(); g.ellipse(cx-15, 4+bob, 5, 7, 0.3, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cx+15, 4+bob, 5, 7, -0.3, 0, Math.PI*2); g.fill();
+    // Mid-golden layer (organic overlapping ellipses, not circles in a row)
+    g.fillStyle='#c09018';
+    g.beginPath(); g.ellipse(cx-14, 2+bob, 7, 9, 0.35, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cx-6,  -6+bob, 8, 10, 0.1, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cx+2,  -8+bob, 8, 10, 0, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cx+10, -5+bob, 7, 9, -0.2, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cx+15, 3+bob, 6, 7, -0.35, 0, Math.PI*2); g.fill();
+    // Bright golden highlights on top of clumps
+    g.fillStyle='#e0b020';
+    g.beginPath(); g.ellipse(cx-5, -10+bob, 5, 6, 0.1, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cx+3, -12+bob, 5.5, 6, 0, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cx+10, -8+bob, 4.5, 5.5, -0.2, 0, Math.PI*2); g.fill();
+    // Very bright tips
+    g.fillStyle='#f0d050';
+    g.beginPath(); g.arc(cx+1, -14+bob, 3.2, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx-4, -12+bob, 2.5, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx+8, -10+bob, 2.5, 0, Math.PI*2); g.fill();
 
     // ── SWORD ──
     const def=Inventory.weapon?ITEM_DEFS[Inventory.weapon]:null;
