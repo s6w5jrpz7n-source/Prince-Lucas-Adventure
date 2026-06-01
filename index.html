@@ -133,20 +133,112 @@ const Sound = {
     this.stopMusic();
     this.currentLevel=levelIdx; this.musicOn=true;
     const boss=(levelIdx===4||levelIdx===9);
-    // pentatonic C major or minor tense
-    const major=[523,587,659,784,880,784,659,587];
-    const forest=[659,784,880,1046,880,784,659,523];
-    const minor=[440,523,587,440,659,587,523,494];
-    const seq=boss?minor:(levelIdx===0?forest:major);
-    const bpm=boss?160:120;
-    const beat=60/bpm;
+
+    // Note table (Hz)
+    const N={
+      C3:131,D3:147,E3:165,F3:175,G3:196,A3:220,B3:247,
+      C4:262,D4:294,E4:330,F4:349,G4:392,A4:440,B4:494,
+      C5:523,D5:587,E5:659,F5:698,G5:784,A5:880,B5:988,C6:1047,
+      _:0
+    };
+
+    // Each entry: [melody, bass, chords, bpm, melType, bassType]
+    const themes=[
+      // 0 Forest – bright, bouncy C-major
+      { bpm:122, mt:'triangle', bt:'sine',
+        mel:[N.E5,N._,N.G5,N._,N.C6,N._,N.G5,N.E5, N.D5,N._,N.F5,N._,N.A5,N._,N.F5,N.D5,
+             N.C5,N.E5,N.G5,N.C6,N.B5,N._,N.A5,N.G5, N.F5,N.E5,N.D5,N.C5,N.G4,N._,N._,N._],
+        bas:[N.C3,N._,N.G3,N._,N.C3,N._,N.G3,N._, N.F3,N._,N.C3,N._,N.F3,N._,N.C3,N._,
+             N.C3,N._,N.E3,N._,N.G3,N._,N.G3,N._, N.F3,N._,N.C3,N._,N.G3,N._,N._,N._],
+        cho:[[N.C4,N.E4,N.G4],[N.F4,N.A4,N.C5],[N.G4,N.B4,N.D5],[N.C4,N.E4,N.G4]] },
+      // 1 Rocky Mountains – steady, slightly darker
+      { bpm:128, mt:'triangle', bt:'sine',
+        mel:[N.G5,N._,N.E5,N._,N.G5,N.A5,N.G5,N._, N.E5,N._,N.D5,N._,N.E5,N._,N._,N._,
+             N.C5,N._,N.E5,N.G5,N.A5,N.G5,N.E5,N._, N.D5,N.E5,N.F5,N._,N.G5,N._,N._,N._],
+        bas:[N.C3,N._,N.G3,N._,N.C3,N._,N.G3,N._, N.A3,N._,N.E3,N._,N.A3,N._,N.E3,N._,
+             N.F3,N._,N.C3,N._,N.G3,N._,N.G3,N._, N.G3,N._,N.D3,N._,N.G3,N._,N._,N._],
+        cho:[[N.C4,N.E4,N.G4],[N.A3,N.C4,N.E4],[N.F4,N.A4,N.C5],[N.G4,N.B4,N.D5]] },
+      // 2 Dark Cave – minor, mysterious
+      { bpm:110, mt:'square', bt:'sine',
+        mel:[N.A4,N._,N.C5,N._,N.E5,N._,N.D5,N.C5, N.B4,N._,N.A4,N._,N.G4,N._,N._,N._,
+             N.F5,N._,N.E5,N._,N.D5,N.C5,N.D5,N._, N.E5,N._,N.A4,N._,N.B4,N._,N._,N._],
+        bas:[N.A3,N._,N.E3,N._,N.A3,N._,N.E3,N._, N.D3,N._,N.A3,N._,N.D3,N._,N.A3,N._,
+             N.F3,N._,N.C3,N._,N.F3,N._,N.C3,N._, N.E3,N._,N.B3,N._,N.E3,N._,N._,N._],
+        cho:[[N.A3,N.C4,N.E4],[N.D4,N.F4,N.A4],[N.E4,N.G4,N.B4],[N.A3,N.C4,N.E4]] },
+      // 3 Swamp – slow, eerie (Bb=466/233/117)
+      { bpm:100, mt:'square', bt:'sine',
+        mel:[N.D5,N._,N.F5,N._,N.A5,N._,N.G5,N.F5, N.E5,N._,N.D5,N._,N.C5,N._,N._,N._,
+             466,N._,N.D5,N.F5,N.A5,N._,N.G5,N._, N.F5,N.E5,N.D5,N._,N.C5,N._,N._,N._],
+        bas:[N.D3,N._,N.A3,N._,N.D3,N._,N.A3,N._, N.G3,N._,N.D3,N._,N.G3,N._,N.D3,N._,
+             117,N._,N.F3,N._,117,N._,N.F3,N._, N.A3,N._,N.E3,N._,N.A3,N._,N._,N._],
+        cho:[[N.D4,N.F4,N.A4],[N.G3,233,N.D4],[N.A3,N.C4,N.E4],[N.D4,N.F4,N.A4]] },
+      // 4 Dragon Boss – intense, fast minor
+      { bpm:165, mt:'sawtooth', bt:'sawtooth',
+        mel:[N.A5,N.G5,N.F5,N.E5,N.D5,N.C5,N.D5,N.E5, N.F5,N._,N.E5,N._,N.D5,N.C5,N.B4,N._,
+             N.A4,N.B4,N.C5,N.D5,N.E5,N.F5,N.G5,N.A5, N.B5,N._,N.A5,N.G5,N.A5,N._,N._,N._],
+        bas:[N.A3,N._,N.A3,N._,N.E3,N._,N.E3,N._, N.F3,N._,N.F3,N._,N.E3,N._,N.E3,N._,
+             N.A3,N._,N.A3,N._,N.E3,N._,N.E3,N._, N.D3,N._,N.E3,N._,N.A3,N._,N._,N._],
+        cho:[[N.A3,N.C4,N.E4],[N.F3,N.A3,N.C4],[N.G3,N.B3,N.D4],[N.A3,N.C4,N.E4]] },
+      // 5 Ice Castle – bright and fast
+      { bpm:138, mt:'triangle', bt:'sine',
+        mel:[N.C6,N._,N.A5,N._,N.G5,N.F5,N.E5,N._, N.D5,N._,N.E5,N._,N.F5,N._,N.G5,N._,
+             N.A5,N.G5,N.F5,N.E5,N.D5,N._,N.C5,N._, N.E5,N.G5,N.C6,N._,N._,N._,N._,N._],
+        bas:[N.C3,N._,N.G3,N._,N.C3,N._,N.G3,N._, N.F3,N._,N.C3,N._,N.G3,N._,N.G3,N._,
+             N.A3,N._,N.F3,N._,N.C3,N._,N.G3,N._, N.C3,N._,N.G3,N._,N.C3,N._,N._,N._],
+        cho:[[N.C4,N.E4,N.G4],[N.F4,N.A4,N.C5],[N.G4,N.B4,N.D5],[N.C4,N.E4,N.G4]] },
+      // 6 Lava – hard rock feel
+      { bpm:148, mt:'sawtooth', bt:'sawtooth',
+        mel:[N.E5,N._,N.E5,N.D5,N.C5,N._,N.B4,N._, N.A4,N._,N.A4,N.B4,N.C5,N.D5,N.E5,N._,
+             N.F5,N.E5,N.D5,N.C5,N.B4,N.C5,N.D5,N._, N.E5,N._,N._,N._,N.E5,N._,N._,N._],
+        bas:[N.E3,N._,N.E3,N._,N.A3,N._,N.A3,N._, N.D3,N._,N.D3,N._,N.A3,N._,N.A3,N._,
+             N.C3,N._,N.C3,N._,N.G3,N._,N.G3,N._, N.A3,N._,N.E3,N._,N.A3,N._,N._,N._],
+        cho:[[N.E4,N.G4,N.B4],[N.A3,N.C4,N.E4],[N.D4,N.F4,N.A4],[N.E4,N.G4,N.B4]] },
+      // 7 Sky Islands – soaring, high
+      { bpm:130, mt:'triangle', bt:'sine',
+        mel:[N.G5,N.A5,N.B5,N.C6,N.B5,N.A5,N.G5,N._, N.E5,N.F5,N.G5,N.A5,N.G5,N.F5,N.E5,N._,
+             N.D5,N.E5,N.F5,N.G5,N.A5,N.B5,N.C6,N._, N.G5,N._,N.E5,N._,N.C5,N._,N._,N._],
+        bas:[N.C3,N._,N.G3,N._,N.E3,N._,N.G3,N._, N.A3,N._,N.E3,N._,N.A3,N._,N.E3,N._,
+             N.F3,N._,N.C3,N._,N.G3,N._,N.G3,N._, N.C3,N._,N.E3,N._,N.G3,N._,N._,N._],
+        cho:[[N.C4,N.E4,N.G4],[N.A3,N.C4,N.E4],[N.F4,N.A4,N.C5],[N.G4,N.B4,N.D5]] },
+      // 8 Ruins – ancient, stately
+      { bpm:112, mt:'triangle', bt:'sine',
+        mel:[N.D5,N._,N.F5,N._,N.A5,N._,N.F5,N.D5, N.C5,N._,N.E5,N._,N.G5,N._,N.E5,N.C5,
+             N.B4,N.D5,N.F5,N.A5,N.G5,N._,N.F5,N._, N.E5,N.D5,N.C5,N._,N.D5,N._,N._,N._],
+        bas:[N.D3,N._,N.A3,N._,N.D3,N._,N.A3,N._, N.C3,N._,N.G3,N._,N.C3,N._,N.G3,N._,
+             N.B3,N._,N.F3,N._,N.B3,N._,N.F3,N._, N.G3,N._,N.D3,N._,N.G3,N._,N._,N._],
+        cho:[[N.D4,N.F4,N.A4],[N.C4,N.E4,N.G4],[N.G3,N.B3,N.D4],[N.D4,N.F4,N.A4]] },
+      // 9 Final Boss – epic, fast, powerful
+      { bpm:172, mt:'sawtooth', bt:'sawtooth',
+        mel:[N.A5,N._,N.E5,N._,N.F5,N._,N.G5,N.A5, N.B5,N._,N.A5,N._,N.G5,N.F5,N.E5,N._,
+             N.D5,N.E5,N.F5,N.G5,N.A5,N._,N.B5,N.C6, N.B5,N.A5,N.G5,N.F5,N.E5,N._,N._,N._],
+        bas:[N.A3,N.A3,N._,N.A3,N.E3,N.E3,N._,N.E3, N.D3,N.D3,N._,N.D3,N.E3,N._,N.E3,N._,
+             N.F3,N._,N.F3,N._,N.A3,N.A3,N._,N.A3, N.E3,N._,N.E3,N._,N.A3,N._,N._,N._],
+        cho:[[N.A3,N.C4,N.E4],[N.D4,N.F4,N.A4],[N.E4,N.G4,N.B4],[N.F4,N.A4,N.C5]] },
+    ];
+
+    // Clamp to available themes
+    const th=themes[Math.min(levelIdx,themes.length-1)];
+    const beat=60/th.bpm;
     let i=0;
+    const chordsPerBar=th.cho.length;
     const step=()=>{
       if(!this.musicOn)return;
-      const n=seq[i%seq.length];
-      this.tone(n,boss?'sawtooth':'triangle',beat*0.9,boss?0.05:0.04);
+      const t0=this.now();
+      const mi=i%th.mel.length;
+      const bi=i%th.bas.length;
+      const mn=th.mel[mi], bn=th.bas[bi];
+      // melody
+      if(mn) this.tone(mn,th.mt,beat*0.88,(levelIdx===4||levelIdx===9)?0.055:0.048,t0);
       // bass
-      if(i%2===0)this.tone(n/2,'sine',beat*1.8,0.04);
+      if(bn) this.tone(bn,th.bt,beat*1.7,0.055,t0);
+      // chord pads every 4 steps
+      if(i%4===0){
+        const chord=th.cho[Math.floor(i/4)%chordsPerBar];
+        chord.forEach((n,ci)=>{ if(n)this.tone(n,'sine',beat*3.8,0.022,t0+ci*0.008); });
+      }
+      // percussion: kick+snare
+      if(i%4===0) this.noise(0.06,0.07,220);
+      if(i%4===2) this.noise(0.04,0.04,900);
       i++;
       this.musicTimer=setTimeout(step,beat*1000);
     };
@@ -274,78 +366,180 @@ class Player {
     if(this.facing<0)g.scale(-1,1);
     g.translate(-this.w/2,0);
     const cx=this.w/2;
-    // ---- walk-frame leg/arm offsets ----
-    // frame 0 idle, 1 step right, 2 mid, 3 step left
-    let rLeg=0,lLeg=0,rArm=0,lArm=0;
+    // walk-frame offsets matching the 4-pose sprite sheet
+    // 0=idle(sword raised), 1=walk step R, 2=mid, 3=walk step L
+    let rLeg=0,lLeg=0,rArm=0,lArm=0,bodyBob=0;
     switch(this.walkFrame){
-      case 0: rLeg=0; lLeg=0; rArm=0; lArm=0; break;
-      case 1: rLeg=-6; lLeg=4; rArm=4; lArm=-5; break;
-      case 2: rLeg=0; lLeg=0; rArm=0; lArm=0; break;
-      case 3: rLeg=4; lLeg=-6; rArm=-5; lArm=4; break;
+      case 0: rLeg=0;  lLeg=0;  rArm=0;  lArm=0;  bodyBob=0;  break;
+      case 1: rLeg=-7; lLeg=5;  rArm=5;  lArm=-6; bodyBob=-1; break;
+      case 2: rLeg=0;  lLeg=0;  rArm=0;  lArm=0;  bodyBob=1;  break;
+      case 3: rLeg=5;  lLeg=-7; rArm=-6; lArm=5;  bodyBob=-1; break;
     }
-    // legs (red pants)
+    // Attack pose: wide stance like bottom-right sprite
+    if(this.attacking>0){ rLeg=4; lLeg=-4; rArm=-4; lArm=8; bodyBob=2; }
+
+    // ── SHADOW ──
+    g.fillStyle='rgba(0,0,0,0.18)';
+    g.beginPath(); g.ellipse(cx,62,14,4,0,0,Math.PI*2); g.fill();
+
+    // ── LEFT LEG (back) ──
+    g.fillStyle='#c62828';
+    g.fillRect(cx-12, 38+bodyBob+lLeg, 12, 18-lLeg);
+    // left shoe + cuff
+    g.fillStyle='#37474f'; g.fillRect(cx-14, 54+bodyBob+lLeg, 14, 8);
+    g.fillStyle='#fb8c00'; g.fillRect(cx-14, 52+bodyBob+lLeg, 14, 4); // orange cuff
+    g.fillStyle='#f8c9a4'; g.fillRect(cx-13, 51+bodyBob+lLeg, 12, 3); // light trim above cuff
+    // yellow star on left leg
+    drawStar(g, cx-6, 46+bodyBob+lLeg, 4.5, '#ffd600');
+
+    // ── RIGHT LEG (front) ──
     g.fillStyle='#d32f2f';
-    g.fillRect(cx-12, 40+lLeg, 11, 16-lLeg);
-    g.fillRect(cx+1, 40+rLeg, 11, 16-rLeg);
-    // star/cross shapes on pants
-    drawStar(g,cx-6,46+lLeg,3.5,'#ffd600');
-    drawStar(g,cx+6,46+rLeg,3.2,'#2979ff');
-    // shoes with orange/yellow trim cuffs
-    g.fillStyle='#263238';
-    g.fillRect(cx-13, 54+lLeg, 13, 7);
-    g.fillRect(cx+0, 54+rLeg, 13, 7);
-    g.fillStyle='#ffa726';
-    g.fillRect(cx-13, 53+lLeg, 13, 2);
-    g.fillRect(cx+0, 53+rLeg, 13, 2);
-    // body - blue shirt (armor tint if equipped)
-    g.fillStyle = Inventory.armor? ITEM_DEFS[Inventory.armor].color : '#1976d2';
-    g.fillRect(cx-14, 18, 28, 24);
-    // fire truck / vehicle pattern
+    g.fillRect(cx+0, 38+bodyBob+rLeg, 12, 18-rLeg);
+    // right shoe + cuff
+    g.fillStyle='#37474f'; g.fillRect(cx-1, 54+bodyBob+rLeg, 14, 8);
+    g.fillStyle='#fb8c00'; g.fillRect(cx-1, 52+bodyBob+rLeg, 14, 4);
+    g.fillStyle='#f8c9a4'; g.fillRect(cx, 51+bodyBob+rLeg, 12, 3);
+    // blue cross on right leg
+    g.fillStyle='#42a5f5';
+    g.fillRect(cx+4, 43+bodyBob+rLeg, 4, 8);
+    g.fillRect(cx+2, 45+bodyBob+rLeg, 8, 4);
+
+    // ── BODY – blue shirt ──
+    const shirtColor = Inventory.armor ? ITEM_DEFS[Inventory.armor].color : '#1565c0';
+    g.fillStyle=shirtColor;
+    g.fillRect(cx-14, 17+bodyBob, 28, 23);
+    // shirt collar/cuffs in slightly lighter blue
+    g.fillStyle=Inventory.armor?shirtColor:'#1976d2';
+    g.fillRect(cx-14, 17+bodyBob, 28, 4);  // collar band
+    g.fillRect(cx-14, 36+bodyBob, 28, 4);  // bottom band
+
+    // fire-truck pattern on shirt (3 small trucks)
     if(!Inventory.armor){
-      g.fillStyle='#ff5722'; g.fillRect(cx-10,24,7,4); g.fillRect(cx+3,24,7,4); g.fillRect(cx-3,33,7,4);
-      g.fillStyle='#ffeb3b'; g.fillRect(cx-9,25,2,2); g.fillRect(cx+4,25,2,2); g.fillRect(cx-2,34,2,2);
-      g.fillStyle='#212121'; g.beginPath(); g.arc(cx-7,28.5,1.3,0,7); g.arc(cx-2,28.5,1.3,0,7); g.fill();
+      // truck 1
+      g.fillStyle='#e53935'; g.fillRect(cx-11,22+bodyBob,8,5);
+      g.fillStyle='#ff7043'; g.fillRect(cx-11,20+bodyBob,6,4);
+      g.fillStyle='#ffeb3b'; g.fillRect(cx-10,21+bodyBob,2,2);
+      g.fillStyle='#212121'; g.beginPath(); g.arc(cx-9,27+bodyBob,1.5,0,7); g.arc(cx-5,27+bodyBob,1.5,0,7); g.fill();
+      // truck 2
+      g.fillStyle='#e53935'; g.fillRect(cx+3,22+bodyBob,8,5);
+      g.fillStyle='#ff7043'; g.fillRect(cx+3,20+bodyBob,6,4);
+      g.fillStyle='#ffeb3b'; g.fillRect(cx+4,21+bodyBob,2,2);
+      g.fillStyle='#212121'; g.beginPath(); g.arc(cx+5,27+bodyBob,1.5,0,7); g.arc(cx+9,27+bodyBob,1.5,0,7); g.fill();
+      // truck 3 (smaller, bottom center)
+      g.fillStyle='#e53935'; g.fillRect(cx-4,31+bodyBob,8,4);
+      g.fillStyle='#ff7043'; g.fillRect(cx-4,29+bodyBob,5,3);
+      g.fillStyle='#212121'; g.beginPath(); g.arc(cx-2,35+bodyBob,1.2,0,7); g.arc(cx+2,35+bodyBob,1.2,0,7); g.fill();
     } else {
-      g.fillStyle='rgba(255,255,255,0.2)'; g.fillRect(cx-4,20,8,18);
+      g.fillStyle='rgba(255,255,255,0.18)'; g.fillRect(cx-4,20+bodyBob,8,18);
     }
-    // arms (animated)
-    g.fillStyle = Inventory.armor? ITEM_DEFS[Inventory.armor].color : '#1976d2';
-    g.fillRect(cx-18,20+lArm,6,15); g.fillRect(cx+12,20+rArm,6,15);
-    // hands
+
+    // ── ARMS ──
+    g.fillStyle=shirtColor;
+    g.fillRect(cx-19, 19+bodyBob+lArm, 7, 16);  // left arm
+    g.fillRect(cx+12, 19+bodyBob+rArm, 7, 16);  // right arm
+    // sleeve cuffs
+    g.fillStyle=Inventory.armor?shirtColor:'#1976d2';
+    g.fillRect(cx-19, 32+bodyBob+lArm, 7, 3);
+    g.fillRect(cx+12, 32+bodyBob+rArm, 7, 3);
+    // hands (peach)
     g.fillStyle='#f8c9a4';
-    g.fillRect(cx-18,33+lArm,6,5); g.fillRect(cx+12,33+rArm,6,5);
-    // head
+    g.fillRect(cx-19, 34+bodyBob+lArm, 7, 5);
+    g.fillRect(cx+12, 34+bodyBob+rArm, 7, 5);
+
+    // ── HEAD (big, round, toddler proportions) ──
     g.fillStyle='#f8c9a4';
-    g.beginPath(); g.arc(cx,10,14,0,7); g.fill();
+    g.beginPath(); g.arc(cx, 8+bodyBob, 15, 0, Math.PI*2); g.fill();
+    // ear left
+    g.fillStyle='#f0b898'; g.beginPath(); g.arc(cx-14, 10+bodyBob, 4, 0, Math.PI*2); g.fill();
+    // ear right
+    g.beginPath(); g.arc(cx+14, 10+bodyBob, 4, 0, Math.PI*2); g.fill();
+
+    // ── FACE ──
     // rosy cheeks
-    g.fillStyle='rgba(255,120,120,0.6)';
-    g.beginPath(); g.arc(cx-7,13,3,0,7); g.arc(cx+7,13,3,0,7); g.fill();
-    // eyes (blue)
-    g.fillStyle='#fff'; g.beginPath(); g.arc(cx-5,8,2.8,0,7); g.arc(cx+5,8,2.8,0,7); g.fill();
-    g.fillStyle='#1e88e5'; g.beginPath(); g.arc(cx-5,8,1.5,0,7); g.arc(cx+5,8,1.5,0,7); g.fill();
-    g.fillStyle='#000'; g.beginPath(); g.arc(cx-5,8,0.7,0,7); g.arc(cx+5,8,0.7,0,7); g.fill();
-    // wide happy smile
-    g.strokeStyle='#c0392b'; g.lineWidth=2; g.beginPath(); g.arc(cx,13,5,0.1*Math.PI,0.9*Math.PI); g.stroke();
-    // golden/amber curly hair
+    g.fillStyle='rgba(240,100,100,0.5)';
+    g.beginPath(); g.arc(cx-8, 13+bodyBob, 4, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx+8, 13+bodyBob, 4, 0, Math.PI*2); g.fill();
+    // whites of eyes
+    g.fillStyle='#fff';
+    g.beginPath(); g.ellipse(cx-5, 7+bodyBob, 3.5, 4, 0, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.ellipse(cx+5, 7+bodyBob, 3.5, 4, 0, 0, Math.PI*2); g.fill();
+    // iris (blue)
+    g.fillStyle='#1e88e5';
+    g.beginPath(); g.arc(cx-5, 8+bodyBob, 2.2, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx+5, 8+bodyBob, 2.2, 0, Math.PI*2); g.fill();
+    // pupil
+    g.fillStyle='#000';
+    g.beginPath(); g.arc(cx-5, 8+bodyBob, 1.1, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx+5, 8+bodyBob, 1.1, 0, Math.PI*2); g.fill();
+    // eye shine
+    g.fillStyle='rgba(255,255,255,0.8)';
+    g.beginPath(); g.arc(cx-4, 7+bodyBob, 0.8, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx+6, 7+bodyBob, 0.8, 0, Math.PI*2); g.fill();
+    // big open smile with teeth (matching sprite)
+    g.fillStyle='#e53935';
+    g.beginPath(); g.arc(cx, 13+bodyBob, 5.5, 0, Math.PI); g.fill();
+    g.fillStyle='#fff';
+    g.fillRect(cx-5, 13+bodyBob, 10, 3);
+    g.strokeStyle='rgba(200,50,50,0.5)'; g.lineWidth=0.8;
+    for(let t=-1;t<=1;t++){ g.beginPath(); g.moveTo(cx+t*2.5,13+bodyBob); g.lineTo(cx+t*2.5,16+bodyBob); g.stroke(); }
+    // nose dot
+    g.fillStyle='rgba(200,100,80,0.6)'; g.beginPath(); g.arc(cx, 11+bodyBob, 1.4, 0, Math.PI*2); g.fill();
+
+    // ── HAIR (golden, voluminous, fluffy curls – matching sprite) ──
+    // Dark base
+    g.fillStyle='#b8860b';
+    g.beginPath(); g.arc(cx, -4+bodyBob, 16, Math.PI*0.9, Math.PI*2.1); g.fill();
+    g.beginPath(); g.arc(cx-14, 3+bodyBob, 5, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx+14, 3+bodyBob, 5, 0, Math.PI*2); g.fill();
+    // Golden mid layer
     g.fillStyle='#c8922a';
-    for(let i=-3;i<=3;i++){ g.beginPath(); g.arc(cx+i*4, -2, 4,0,7); g.fill(); }
-    g.beginPath(); g.arc(cx-12,2,4,0,7); g.arc(cx+12,2,4,0,7); g.fill();
-    g.fillStyle='#e8b84b';
-    for(let i=-2;i<=2;i++){ g.beginPath(); g.arc(cx+i*5, -4, 2.4,0,7); g.fill(); }
-    // sword
+    // big fluffy clumps
+    const clumps=[{x:cx-12,y:bodyBob-1,r:5.5},{x:cx-7,y:bodyBob-7,r:6},{x:cx,y:bodyBob-9,r:6.5},
+                  {x:cx+7,y:bodyBob-7,r:6},{x:cx+12,y:bodyBob-1,r:5.5}];
+    for(const c of clumps){ g.beginPath(); g.arc(c.x,c.y,c.r,0,Math.PI*2); g.fill(); }
+    // Highlight / bright tips
+    g.fillStyle='#e8c040';
+    const hiClumps=[{x:cx-8,y:bodyBob-8,r:3.5},{x:cx,y:bodyBob-11,r:4},{x:cx+8,y:bodyBob-8,r:3.5}];
+    for(const c of hiClumps){ g.beginPath(); g.arc(c.x,c.y,c.r,0,Math.PI*2); g.fill(); }
+    // Very bright highlights on tips
+    g.fillStyle='#f5d060';
+    g.beginPath(); g.arc(cx, bodyBob-12, 2.5, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx-7, bodyBob-9, 2, 0, Math.PI*2); g.fill();
+    g.beginPath(); g.arc(cx+7, bodyBob-9, 2, 0, Math.PI*2); g.fill();
+
+    // ── SWORD ──
     const def=Inventory.weapon?ITEM_DEFS[Inventory.weapon]:null;
     if(def){
       g.save();
-      g.translate(cx+16,28);
-      let ang=-0.3;
-      if(this.attacking>0){ ang = -1.3 + (1-this.attacking/14)*2.2; }
-      g.rotate(ang);
-      if(def.glow){ g.shadowColor=def.glow; g.shadowBlur=14; }
-      g.fillStyle=def.blade; g.fillRect(-3,-34,6,34);
-      g.beginPath(); g.moveTo(-3,-34); g.lineTo(0,-40); g.lineTo(3,-34); g.fill();
+      if(this.attacking>0){
+        // Attack pose: sword thrust forward horizontally like bottom-right sprite
+        const prog=(1-this.attacking/14);
+        g.translate(cx+14+prog*8, 26+bodyBob);
+        g.rotate(-0.2 + prog*0.5);
+      } else {
+        // Idle: sword held up and slightly tilted like top-left sprite
+        g.translate(cx+15, 25+bodyBob);
+        g.rotate(-0.35);
+      }
+      if(def.glow){ g.shadowColor=def.glow; g.shadowBlur=16; }
+      // Blade (wooden texture or metal gleam)
+      g.fillStyle=def.blade;
+      g.fillRect(-3,-36,6,36);
+      // Blade tip
+      g.beginPath(); g.moveTo(-3,-36); g.lineTo(0,-43); g.lineTo(3,-36); g.closePath(); g.fill();
+      // Blade edge highlight
+      g.fillStyle='rgba(255,255,255,0.35)'; g.fillRect(-1,-36,2,36);
       g.shadowBlur=0;
-      g.fillStyle='#5d4037'; g.fillRect(-8,0,16,4);
-      g.fillStyle='#3e2723'; g.fillRect(-3,4,6,9);
+      // Guard
+      g.fillStyle='#5d4037'; g.fillRect(-9,0,18,5);
+      g.fillStyle='#4e342e'; g.fillRect(-9,0,4,5); g.fillRect(5,0,4,5); // darker ends
+      // Handle
+      g.fillStyle='#3e2723'; g.fillRect(-3,5,6,10);
+      // Wrap lines on handle
+      g.strokeStyle='#6d4c41'; g.lineWidth=1.2;
+      for(let hw=0;hw<3;hw++){ g.beginPath(); g.moveTo(-3,6+hw*3); g.lineTo(3,6+hw*3); g.stroke(); }
+      // Pommel
+      g.fillStyle='#5d4037'; g.beginPath(); g.arc(0,16,3.5,0,Math.PI*2); g.fill();
       g.restore();
     }
     g.restore();
@@ -401,6 +595,15 @@ class Enemy {
     const dist=Math.abs(px-mx);
     if(dist<340){ this.dir = px<mx?-1:1; this.vx=this.dir*this.speed; }
     else { this.vx=this.dir*this.speed*0.6; }
+    // Pit detection: look ahead for ground, turn around at edges (non-flying enemies)
+    if(this.onGround && this.type!=='dragon'){
+      const lookX = this.vx>0 ? this.x+this.w+6 : this.x-6;
+      let groundAhead=false;
+      for(const p of level.platforms){
+        if(lookX>=p.x && lookX<=p.x+p.w && p.y>=this.y+this.h-8 && p.y<=this.y+this.h+55){ groundAhead=true; break; }
+      }
+      if(!groundAhead){ this.dir*=-1; this.vx*=-1; }
+    }
     this.vy+=GRAVITY; if(this.vy>16)this.vy=16;
     this.x+=this.vx;
     let blockedH=false;
@@ -702,6 +905,14 @@ class Level {
     if(types.boss){
       this.enemySpawns.push({type:types.boss, x:W2-720, y:H-260});
     }
+    // Apples hidden on floating platforms
+    this.apples=[];
+    for(const p of this.platforms){
+      if(!p.ground && p.w>80 && Math.random()<0.40){
+        const ax=p.x+20+Math.random()*(p.w-40);
+        this.apples.push({x:ax, y:p.y-18, w:20, h:20, collected:false, bob:Math.random()*Math.PI*2});
+      }
+    }
     for(let i=0;i<35;i++){ this.decor.push({x:rand(0,W2), y:rand(30,300), r:rand(12,45), t:Math.random()}); }
   }
   enemyTypesForLevel(){
@@ -753,6 +964,25 @@ class Level {
     g.lineTo(gx+this.goal.w,this.goal.y+this.goal.h); g.fill();
     g.restore();
     g.fillStyle='#fff'; g.font='bold 16px Arial'; g.textAlign='center'; g.fillText('ZIEL',gx+this.goal.w/2,this.goal.y+this.goal.h/2);
+  }
+  drawApples(g,cam){
+    for(const a of this.apples){
+      if(a.collected)continue;
+      a.bob+=0.055;
+      const ax=a.x-cam, ay=a.y+Math.sin(a.bob)*4;
+      if(ax<-30||ax>W+30)continue;
+      // Body
+      g.fillStyle='#e53935'; g.beginPath(); g.arc(ax,ay,11,0,Math.PI*2); g.fill();
+      // Cheek shine
+      g.fillStyle='rgba(255,255,255,0.45)'; g.beginPath(); g.arc(ax-4,ay-4,4,0,Math.PI*2); g.fill();
+      // Dark bottom shadow
+      g.fillStyle='rgba(0,0,0,0.15)'; g.beginPath(); g.arc(ax,ay+3,8,0,Math.PI*2); g.fill();
+      // Stem
+      g.strokeStyle='#4e342e'; g.lineWidth=2.5; g.beginPath(); g.moveTo(ax,ay-11); g.quadraticCurveTo(ax+5,ay-18,ax+4,ay-20); g.stroke();
+      // Leaf
+      g.fillStyle='#388e3c'; g.beginPath(); g.ellipse(ax+7,ay-18,6,3,-0.6,0,Math.PI*2); g.fill();
+      g.strokeStyle='#1b5e20'; g.lineWidth=1; g.beginPath(); g.moveTo(ax+4,ay-16); g.lineTo(ax+10,ay-20); g.stroke();
+    }
   }
 }
 
@@ -814,6 +1044,15 @@ const Game={
     this.enemies=this.enemies.filter(e=>!e.dead);
     for(const d of this.drops)d.update(lv,p);
     this.drops=this.drops.filter(d=>d.life>0);
+    // Apple collection
+    for(const a of lv.apples){
+      if(a.collected)continue;
+      if(rectsOverlap(p,{x:a.x-11,y:a.y-11,w:22,h:22})){
+        a.collected=true; this.score+=50;
+        addFloater(a.x,a.y-10,'+50 🍎','#ff6b6b'); Sound.collectItem();
+        addMessage('Apfel gefunden! +50 Punkte');
+      }
+    }
     const target=clamp(p.x+p.w/2 - W/2, 0, lv.width-W);
     this.cam=lerp(this.cam,target,0.1);
     for(const f of floaters){ f.y+=f.vy; f.life--; }
@@ -830,6 +1069,7 @@ const Game={
     const lv=this.level;
     lv.drawBg(ctx,this.cam);
     lv.drawPlatforms(ctx,this.cam);
+    lv.drawApples(ctx,this.cam);
     lv.npc.draw(ctx,this.cam);
     for(const d of this.drops)d.draw(ctx,this.cam);
     for(const e of this.enemies)e.draw(ctx,this.cam);
