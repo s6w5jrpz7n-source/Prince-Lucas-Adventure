@@ -80,6 +80,36 @@ function lootForEnemy(type){
   return [];
 }
 
+// ---------- Sprites ----------
+function makeTransparent(img, threshold=240){
+  const c=document.createElement('canvas'); c.width=img.naturalWidth||img.width; c.height=img.naturalHeight||img.height;
+  const g=c.getContext('2d'); g.drawImage(img,0,0);
+  const d=g.getImageData(0,0,c.width,c.height);
+  for(let i=0;i<d.data.length;i+=4){
+    if(d.data[i]>threshold && d.data[i+1]>threshold && d.data[i+2]>threshold) d.data[i+3]=0;
+  }
+  g.putImageData(d,0,0);
+  return c;
+}
+const Sprites={
+  frames:[null,null,null,null], // 001=idle, 002=attack, 003=walk1, 004=walk2
+  loaded:0, total:4, failed:0,
+  load(){
+    for(let i=0;i<4;i++){
+      const img=new Image();
+      img.onload=()=>{
+        this.frames[i]=makeTransparent(img);
+        this.loaded++;
+      };
+      img.onerror=()=>{ this.failed++; this.loaded++; };
+      img.src='sprites/00'+(i+1)+'.png';
+    }
+  },
+  ready(){ return this.loaded>=this.total && this.frames.some(f=>f!==null); },
+  get(idx){ return this.frames[idx]; } // 0=idle,1=attack,2=walk1,3=walk2
+};
+Sprites.load();
+
 // ---------- Sound ----------
 const Sound = {
   ctx:null, musicTimer:null, musicOn:false, currentLevel:-1,
@@ -441,7 +471,30 @@ class Player {
     addFloater(this.x+this.w/2,this.y,'-'+real,'#ff5252');
     if(this.hp<=0)this.hp=0;
   }
+  _drawSprite(g,cam){
+    const x=this.x-cam, y=this.y;
+    if(this.invuln>0 && Math.floor(this.invuln/4)%2===0) g.globalAlpha=0.5;
+    // Pick frame: attack=1, walk alternates 2/3, idle=0
+    let fi=0;
+    if(this.attacking>0) fi=1;
+    else if(this.moving) fi=(this.walkFrame%2===0)?2:3;
+    const frame=Sprites.get(fi);
+    if(!frame){ g.globalAlpha=1; return false; }
+    const dw=this.w*2, dh=this.h*2; // render at 2x sprite size
+    g.save();
+    if(this.facing<0){
+      g.translate(x+this.w/2,y+(this.h-dh)/2);
+      g.scale(-1,1);
+      g.drawImage(frame,-dw/2,0,dw,dh);
+    } else {
+      g.drawImage(frame,x+(this.w-dw)/2,y+(this.h-dh)/2,dw,dh);
+    }
+    g.restore();
+    g.globalAlpha=1;
+    return true;
+  }
   draw(g,cam){
+    if(Sprites.ready() && this._drawSprite(g,cam)) return;
     const x=this.x-cam, y=this.y;
     if(this.invuln>0 && Math.floor(this.invuln/4)%2===0) g.globalAlpha=0.5;
     g.save(); g.translate(x+this.w/2,y);
@@ -624,7 +677,7 @@ class Player {
     const def=Inventory.weapon?ITEM_DEFS[Inventory.weapon]:null;
     if(def && def.ranged){
       g.save();
-      g.translate(cx+16, 26+bodyBob+rArm);
+      g.translate(cx+16, 26+bob+rArm);
       if(def.projectileType==='arrow'){
         // Bow: curved brown arc with white string
         if(def.glow){ g.shadowColor=def.glow; g.shadowBlur=12; }
@@ -653,11 +706,11 @@ class Player {
       if(this.attacking>0){
         // Attack pose: sword thrust forward horizontally like bottom-right sprite
         const prog=(1-this.attacking/14);
-        g.translate(cx+14+prog*8, 26+bodyBob);
+        g.translate(cx+14+prog*8, 26+bob);
         g.rotate(-0.2 + prog*0.5);
       } else {
         // Idle: sword held up and slightly tilted like top-left sprite
-        g.translate(cx+15, 25+bodyBob);
+        g.translate(cx+15, 25+bob);
         g.rotate(-0.35);
       }
       if(def.glow){ g.shadowColor=def.glow; g.shadowBlur=16; }
@@ -1524,21 +1577,35 @@ const Game={
     ctx.fillText('Punkte: +'+this.lastScore,W/2,H/2+30);
   },
   drawMenu(){
-    const grad=ctx.createLinearGradient(0,0,0,H); grad.addColorStop(0,'#1a237e'); grad.addColorStop(1,'#4a148c');
-    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
-    ctx.save(); ctx.translate(W/2-44, 110); ctx.scale(3.0,3.0);
-    const tmp=new Player(); tmp.x=0; tmp.y=0; tmp.facing=1;
-    Inventory.weapon='holzschwert';
-    tmp.draw(ctx,0); ctx.restore();
+    // Plain dark background — no decorations, just the character
+    ctx.fillStyle='#0d0d1a'; ctx.fillRect(0,0,W,H);
+    // Character — sprite if loaded, else canvas fallback
+    const charW=200, charH=280;
+    const charX=(W-charW)/2, charY=80;
+    if(Sprites.ready()){
+      const frame=Sprites.get(0); // idle
+      if(frame){
+        if(frame.width&&frame.height){
+          ctx.drawImage(frame,charX,charY,charW,charH);
+        }
+      }
+    } else {
+      // Canvas fallback: draw at 4x scale centered
+      ctx.save(); ctx.translate(charX+charW/2-22, charY+20); ctx.scale(4,4);
+      const tmp=new Player(); tmp.x=0; tmp.y=0; tmp.facing=1; tmp.attacking=0; tmp.moving=false;
+      Inventory.weapon='holzschwert';
+      tmp.draw(ctx,0);
+      ctx.restore();
+    }
     ctx.textAlign='center';
-    ctx.fillStyle='#fff'; ctx.font='bold 40px Arial'; ctx.fillText("The Adventures of",W/2,400);
-    ctx.fillStyle='#ffd700'; ctx.font='bold 64px Arial'; ctx.fillText("Prince Lucas",W/2,470);
-    ctx.fillStyle='#43a047'; this._startBtn={x:W/2-150,y:510,w:300,h:60};
+    ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.font='bold 36px Arial'; ctx.fillText("The Adventures of",W/2,400);
+    ctx.fillStyle='#ffd700'; ctx.font='bold 68px Arial'; ctx.fillText("Prince Lucas",W/2,474);
+    ctx.fillStyle='#43a047'; this._startBtn={x:W/2-150,y:514,w:300,h:60};
     roundRect(ctx,this._startBtn.x,this._startBtn.y,this._startBtn.w,this._startBtn.h,12); ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='bold 30px Arial'; ctx.fillText('Spiel starten',W/2,550);
+    ctx.fillStyle='#fff'; ctx.font='bold 30px Arial'; ctx.fillText('Spiel starten',W/2,554);
     ctx.font='15px Arial'; ctx.fillStyle='#cfd8dc';
-    ctx.fillText('Pfeile/WASD: Bewegen & Springen (Doppelsprung)  |  Z/X: Angriff  |  S: Shop',W/2,610);
-    ctx.fillText('I/Tab: Inventar  |  1-5: Tränke benutzen  |  Enter/Leertaste: Bestätigen',W/2,634);
+    ctx.fillText('Pfeile/WASD: Bewegen & Springen (Doppelsprung)  |  Z/X: Angriff  |  S: Shop',W/2,620);
+    ctx.fillText('I/Tab: Inventar  |  1-5: Tränke benutzen  |  Enter/Leertaste: Bestätigen',W/2,644);
   },
   drawGameOver(){
     ctx.fillStyle='rgba(0,0,0,0.8)'; ctx.fillRect(0,0,W,H);
