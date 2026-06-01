@@ -45,6 +45,10 @@ const ITEM_DEFS = {
   stahlschwert:{id:'stahlschwert',type:'weapon',name:'Stahlschwert',atk:25,rarity:'rare',glow:null,blade:'#eceff1',price:300},
   magiestab:{id:'magiestab',type:'weapon',name:'Magiestab',atk:35,rarity:'epic',glow:'#2196f3',blade:'#8bd0ff',price:600},
   drachenschwert:{id:'drachenschwert',type:'weapon',name:'Drachenschwert',atk:50,rarity:'legendary',glow:'#9c27b0',blade:'#c77dff',price:1200},
+  bogen:{id:'bogen',type:'weapon',name:'Bogen',atk:20,rarity:'rare',glow:null,blade:'#8d6e63',price:200,ranged:true,projectileType:'arrow'},
+  armbrust:{id:'armbrust',type:'weapon',name:'Armbrust',atk:35,rarity:'epic',glow:'#00bcd4',blade:'#607d8b',price:500,ranged:true,projectileType:'bolt'},
+  pfeil:{id:'pfeil',type:'ammo',name:'Pfeil-Bündel (10)',count:10,rarity:'common',color:'#8d6e63',price:15},
+  bolzen:{id:'bolzen',type:'ammo',name:'Armbrust-Bolzen (5)',count:5,rarity:'uncommon',color:'#607d8b',price:25},
   lederruestung:{id:'lederruestung',type:'armor',name:'Lederrüstung',def:5,rarity:'common',color:'#8d5524',price:40},
   kettenhemd:{id:'kettenhemd',type:'armor',name:'Kettenhemd',def:12,rarity:'uncommon',color:'#9e9e9e',price:120},
   ritterruestung:{id:'ritterruestung',type:'armor',name:'Ritterrüstung',def:20,rarity:'rare',color:'#b0bec5',price:250},
@@ -59,6 +63,7 @@ const ITEM_DEFS = {
 // Shop catalog order
 const SHOP_ITEMS = ['kleinerheil','mittlererheil','grosserheil','staerketrank',
   'holzschwert','eisenschwert','stahlschwert','magiestab','drachenschwert',
+  'bogen','armbrust','pfeil','bolzen',
   'lederruestung','kettenhemd','ritterruestung','koenigsruestung','drachenruestung'];
 
 function sellPrice(id){ const d=ITEM_DEFS[id]; return Math.max(5, Math.floor((d.price||10)*0.5)); }
@@ -66,9 +71,9 @@ function sellPrice(id){ const d=ITEM_DEFS[id]; return Math.max(5, Math.floor((d.
 function lootForEnemy(type){
   switch(type){
     case 'slime': return Math.random()<0.7?['kleinerheil']:[];
-    case 'goblin': { let out=[]; if(Math.random()<0.4) out.push(pick(['holzschwert','lederruestung','kleinerheil'])); return out; }
-    case 'skeleton': { let out=[]; if(Math.random()<0.5) out.push(pick(['eisenschwert','kettenhemd','mittlererheil'])); return out; }
-    case 'darkknight': { let out=[]; if(Math.random()<0.7) out.push(pick(['stahlschwert','ritterruestung','grosserheil','staerketrank'])); return out; }
+    case 'goblin': { let out=[]; if(Math.random()<0.4) out.push(pick(['holzschwert','lederruestung','kleinerheil'])); if(Math.random()<0.3) out.push('pfeil'); return out; }
+    case 'skeleton': { let out=[]; if(Math.random()<0.5) out.push(pick(['eisenschwert','kettenhemd','mittlererheil'])); if(Math.random()<0.35) out.push('pfeil'); return out; }
+    case 'darkknight': { let out=[]; if(Math.random()<0.7) out.push(pick(['stahlschwert','ritterruestung','grosserheil','staerketrank'])); if(Math.random()<0.4) out.push('bolzen'); return out; }
     case 'troll': { let out=['grosserheil']; if(Math.random()<0.8) out.push(pick(['stahlschwert','magiestab','koenigsruestung','ritterruestung'])); return out; }
     case 'dragon': { return [pick(['drachenschwert','drachenruestung']), 'grosserheil','staerketrank', pick(['magiestab','koenigsruestung'])]; }
   }
@@ -249,10 +254,11 @@ const Sound = {
 
 // ---------- Inventory ----------
 const Inventory = {
-  items:[], gold:0, weapon:null, armor:null, maxSlots:20,
-  reset(){ this.items=[]; this.gold=0; this.weapon='holzschwert'; this.armor=null; },
+  items:[], gold:0, weapon:null, armor:null, maxSlots:20, arrows:0, bolts:0,
+  reset(){ this.items=[]; this.gold=0; this.weapon='holzschwert'; this.armor=null; this.arrows=0; this.bolts=0; },
   add(id){
     const def=ITEM_DEFS[id]; if(!def)return false;
+    if(def.type==='ammo'){ if(id==='pfeil')this.arrows+=def.count; else if(id==='bolzen')this.bolts+=def.count; return true; }
     if(def.type==='potion'){ let s=this.items.find(it=>it.id===id); if(s){s.count++;return true;} }
     if(this.items.length>=this.maxSlots)return false;
     this.items.push({id,count:1}); return true;
@@ -266,7 +272,26 @@ const Inventory = {
 function drawItemIcon(g,id,x,y,size){
   const def=ITEM_DEFS[id]; if(!def)return;
   g.save(); g.translate(x,y); const s=size;
-  if(def.type==='weapon'){
+  if(def.type==='weapon' && def.ranged){
+    g.save();
+    if(def.glow){ g.shadowColor=def.glow; g.shadowBlur=10; }
+    if(def.projectileType==='arrow'){
+      g.strokeStyle=def.blade; g.lineWidth=s*0.07;
+      g.beginPath(); g.arc(s*0.62,s*0.5,s*0.32,-Math.PI*0.6,Math.PI*0.6); g.stroke();
+      g.shadowBlur=0;
+      g.strokeStyle='#eee'; g.lineWidth=s*0.03;
+      g.beginPath(); g.moveTo(s*0.62+Math.cos(-Math.PI*0.6)*s*0.32,s*0.5+Math.sin(-Math.PI*0.6)*s*0.32);
+      g.lineTo(s*0.62+Math.cos(Math.PI*0.6)*s*0.32,s*0.5+Math.sin(Math.PI*0.6)*s*0.32); g.stroke();
+      g.strokeStyle='#8d6e63'; g.lineWidth=s*0.04; g.beginPath(); g.moveTo(s*0.2,s*0.5); g.lineTo(s*0.62,s*0.5); g.stroke();
+    } else {
+      g.fillStyle=def.blade; g.fillRect(s*0.2,s*0.45,s*0.55,s*0.1);
+      g.strokeStyle='#455a64'; g.lineWidth=s*0.07;
+      g.beginPath(); g.arc(s*0.62,s*0.5,s*0.22,-Math.PI*0.5,Math.PI*0.5); g.stroke();
+      g.shadowBlur=0;
+      g.strokeStyle='#eee'; g.lineWidth=s*0.025; g.beginPath(); g.moveTo(s*0.62,s*0.28); g.lineTo(s*0.2,s*0.5); g.lineTo(s*0.62,s*0.72); g.stroke();
+    }
+    g.restore();
+  } else if(def.type==='weapon'){
     g.save(); g.translate(s*0.5,s*0.5); g.rotate(-Math.PI/4);
     if(def.glow){ g.shadowColor=def.glow; g.shadowBlur=10; }
     g.fillStyle=def.blade; g.fillRect(-s*0.06,-s*0.42,s*0.12,s*0.55);
@@ -283,6 +308,15 @@ function drawItemIcon(g,id,x,y,size){
     g.lineTo(s*0.72,s*0.8); g.lineTo(s*0.28,s*0.8); g.closePath(); g.fill();
     g.strokeStyle='rgba(0,0,0,0.3)'; g.lineWidth=2; g.stroke();
     g.fillStyle='rgba(255,255,255,0.25)'; g.fillRect(s*0.46,s*0.25,s*0.08,s*0.5);
+  } else if(def.type==='ammo'){
+    // bundle of arrows/bolts
+    for(let i=-1;i<=1;i++){
+      g.save(); g.translate(s*0.5+i*s*0.12,s*0.5); g.rotate(-Math.PI/4);
+      g.fillStyle=def.color; g.fillRect(-s*0.03,-s*0.35,s*0.06,s*0.6);
+      g.fillStyle='#c62828'; g.beginPath(); g.moveTo(0,-s*0.42); g.lineTo(-s*0.06,-s*0.33); g.lineTo(s*0.06,-s*0.33); g.closePath(); g.fill();
+      g.strokeStyle='#558b2f'; g.lineWidth=1.5; g.beginPath(); g.moveTo(0,s*0.25); g.lineTo(-s*0.06,s*0.32); g.moveTo(0,s*0.25); g.lineTo(s*0.06,s*0.32); g.stroke();
+      g.restore();
+    }
   } else if(def.type==='potion'){
     g.fillStyle='rgba(255,255,255,0.25)'; g.fillRect(s*0.42,s*0.12,s*0.16,s*0.12);
     g.fillStyle=def.color;
@@ -341,6 +375,19 @@ class Player {
   jump(){ if(this.jumps<2){ this.vy=-13.5; this.jumps++; this.onGround=false; Sound.jump(); } }
   attack(){
     if(this.attackCd>0)return;
+    const wdef=Inventory.weapon?ITEM_DEFS[Inventory.weapon]:null;
+    if(wdef && wdef.ranged){
+      const isBow=wdef.projectileType==='arrow';
+      if(isBow && Inventory.arrows<=0){ addMessage('Keine Munition!'); this.attackCd=10; return; }
+      if(!isBow && Inventory.bolts<=0){ addMessage('Keine Munition!'); this.attackCd=10; return; }
+      if(isBow)Inventory.arrows--; else Inventory.bolts--;
+      this.attacking=14; this.attackCd=22; Sound.attack();
+      const spd=isBow?13:18;
+      const dmg=this.atk + Math.floor(rand(-2,3));
+      const px=this.facing>0?this.x+this.w:this.x;
+      Game.projectiles.push(new Projectile(px, this.y+22, this.facing*spd, wdef.projectileType, dmg));
+      return;
+    }
     this.attacking=14; this.attackCd=24; Sound.attack();
     const reach=60;
     const hb={x:this.facing>0?this.x+this.w:this.x-reach, y:this.y-6, w:reach, h:this.h+10};
@@ -509,7 +556,33 @@ class Player {
 
     // ── SWORD ──
     const def=Inventory.weapon?ITEM_DEFS[Inventory.weapon]:null;
-    if(def){
+    if(def && def.ranged){
+      g.save();
+      g.translate(cx+16, 26+bodyBob+rArm);
+      if(def.projectileType==='arrow'){
+        // Bow: curved brown arc with white string
+        if(def.glow){ g.shadowColor=def.glow; g.shadowBlur=12; }
+        g.strokeStyle=def.blade; g.lineWidth=3;
+        g.beginPath(); g.arc(0,0,16,-Math.PI*0.6,Math.PI*0.6); g.stroke();
+        g.shadowBlur=0;
+        g.strokeStyle='#fff'; g.lineWidth=1;
+        const ax=Math.cos(-Math.PI*0.6)*16, ay=Math.sin(-Math.PI*0.6)*16;
+        const bx=Math.cos(Math.PI*0.6)*16, by=Math.sin(Math.PI*0.6)*16;
+        const pull=this.attacking>0?-6:-2;
+        g.beginPath(); g.moveTo(ax,ay); g.lineTo(pull,0); g.lineTo(bx,by); g.stroke();
+      } else {
+        // Crossbow: horizontal stock with vertical bow
+        if(def.glow){ g.shadowColor=def.glow; g.shadowBlur=12; }
+        g.fillStyle=def.blade; g.fillRect(-4,-2,22,4);
+        g.strokeStyle='#455a64'; g.lineWidth=3;
+        g.beginPath(); g.arc(14,0,9,-Math.PI*0.5,Math.PI*0.5); g.stroke();
+        g.shadowBlur=0;
+        g.strokeStyle='#fff'; g.lineWidth=1;
+        g.beginPath(); g.moveTo(14,-9); g.lineTo(this.attacking>0?-2:2,0); g.lineTo(14,9); g.stroke();
+        g.fillStyle='#37474f'; g.fillRect(-6,-3,5,6);
+      }
+      g.restore();
+    } else if(def){
       g.save();
       if(this.attacking>0){
         // Attack pose: sword thrust forward horizontally like bottom-right sprite
@@ -787,6 +860,45 @@ class Enemy {
   }
 }
 
+// ---------- Projectiles ----------
+class Projectile {
+  constructor(x, y, vx, type, damage){
+    this.x=x; this.y=y; this.vx=vx; this.vy=0;
+    this.w=type==='bolt'?18:14; this.h=4;
+    this.type=type; this.damage=damage; this.dead=false;
+  }
+  update(level, enemies){
+    this.x += this.vx;
+    this.vy += 0.15;
+    this.y += this.vy;
+    for(const e of enemies){
+      if(!e.dead && rectsOverlap(this, e)){
+        e.takeDamage(this.damage); Sound.hitEnemy();
+        this.dead=true; return;
+      }
+    }
+    for(const p of level.platforms){
+      if(rectsOverlap(this, p)){ this.dead=true; return; }
+    }
+    if(this.x<0 || this.x>level.width || this.y>H+100) this.dead=true;
+  }
+  draw(g, cam){
+    if(this.dead) return;
+    const x=this.x-cam;
+    const angle=Math.atan2(this.vy, this.vx);
+    g.save(); g.translate(x+this.w/2, this.y+this.h/2); g.rotate(angle);
+    if(this.type==='arrow'){
+      g.fillStyle='#8d6e63'; g.fillRect(-7,-2,14,4);
+      g.fillStyle='#c62828'; g.beginPath(); g.moveTo(7,0); g.lineTo(3,-3); g.lineTo(3,3); g.closePath(); g.fill();
+      g.strokeStyle='#558b2f'; g.lineWidth=1; g.beginPath(); g.moveTo(-7,0); g.lineTo(-4,-3); g.stroke();
+    } else {
+      g.fillStyle='#546e7a'; g.fillRect(-9,-2,18,4);
+      g.fillStyle='#37474f'; g.beginPath(); g.moveTo(9,0); g.lineTo(5,-3); g.lineTo(5,3); g.closePath(); g.fill();
+    }
+    g.restore();
+  }
+}
+
 // ---------- Drops ----------
 class Drop {
   constructor(x,y,kind,payload){
@@ -866,6 +978,11 @@ const LEVELS=[
   {name:'Himmelsinseln', sky:['#9bd6ff','#d6f0ff'], ground:'#b9e08f', accent:'#8fc46a'},
   {name:'Antike Ruinen', sky:['#c2b280','#8a7a52'], ground:'#a89868', accent:'#7a6a44'},
   {name:'Drachenfestung BOSS', sky:['#1a0a1a','#3a0a2a'], ground:'#2a1a2a', accent:'#9c27b0'},
+  {name:'Kristallhöhlen',    sky:['#1a0a3a','#3a1a5a'], ground:'#7b68ee', accent:'#9370db'},
+  {name:'Unterwasserwelt',   sky:['#006994','#00477a'], ground:'#004060', accent:'#0066aa'},
+  {name:'Verzauberter Wald', sky:['#1a3a1a','#2d5a2d'], ground:'#2d4a1a', accent:'#3d6a2a'},
+  {name:'Vulkangipfel',      sky:['#3a0a00','#600f00'], ground:'#2a0800', accent:'#cc3300'},
+  {name:'Drachenfestung FINAL BOSS', sky:['#0a0015','#1a0030'], ground:'#1a0a2a', accent:'#cc00ff'},
 ];
 
 class Level {
@@ -896,14 +1013,19 @@ class Level {
       this.platforms.push({x:px,y:py,w:pw,h:28});
     }
     const types = this.enemyTypesForLevel();
-    const numEnemies = 6 + this.idx*2;
+    const numEnemies = this.idx<10 ? (6 + this.idx*2) : (14 + (this.idx-10));
     for(let i=0;i<numEnemies;i++){
       const ex = 560 + (i/(numEnemies)) * (W2-960) + rand(-64,64);
       const t = pick(types.regular);
       this.enemySpawns.push({type:t, x:ex, y:H-180});
     }
     if(types.boss){
-      this.enemySpawns.push({type:types.boss, x:W2-720, y:H-260});
+      let bossHp=null;
+      if(this.idx===13 && types.boss==='troll')bossHp=400;
+      if(this.idx===14 && types.boss==='dragon')bossHp=600;
+      else if(this.idx>=10 && types.boss==='dragon')bossHp=480;
+      else if(this.idx>=10 && types.boss==='troll')bossHp=320;
+      this.enemySpawns.push({type:types.boss, x:W2-720, y:H-260, hp:bossHp});
     }
     // Apples hidden on floating platforms
     this.apples=[];
@@ -927,6 +1049,11 @@ class Level {
       case 7: return {regular:['dragon','darkknight','skeleton','goblin','slime']};
       case 8: return {regular:['darkknight','skeleton','darkknight'], boss:'troll'};
       case 9: return {regular:['darkknight','skeleton','goblin','slime'], boss:'dragon'};
+      case 10: return {regular:['darkknight','skeleton','darkknight'], boss:'troll'};
+      case 11: return {regular:['darkknight','darkknight','skeleton','goblin'], boss:'troll'};
+      case 12: return {regular:['skeleton','darkknight','goblin','slime'], boss:'dragon'};
+      case 13: return {regular:['darkknight','darkknight','skeleton','darkknight'], boss:'troll'};
+      case 14: return {regular:['dragon','darkknight','darkknight','skeleton'], boss:'dragon'};
     }
     return {regular:['slime']};
   }
@@ -991,7 +1118,7 @@ const Game={
   state:'menu',
   level:null, levelIndex:0,
   player:new Player(),
-  enemies:[], drops:[],
+  enemies:[], drops:[], projectiles:[],
   cam:0, levelStartTimer:0,
   hoverItem:-1, mouseX:0, mouseY:0,
   score:0, lastScore:0,
@@ -1007,8 +1134,8 @@ const Game={
   loadLevel(idx){
     this.levelIndex=idx;
     this.level=new Level(idx);
-    this.enemies=this.level.enemySpawns.map(s=>new Enemy(s.type,s.x,s.y));
-    this.drops=[];
+    this.enemies=this.level.enemySpawns.map(s=>{ const e=new Enemy(s.type,s.x,s.y); if(s.hp){ e.maxHp=s.hp; e.hp=s.hp; } return e; });
+    this.drops=[]; this.projectiles=[];
     this.player.x=120; this.player.y=420; this.player.vx=0; this.player.vy=0;
     this.player.hp=this.player.maxHp;
     this.cam=0;
@@ -1022,7 +1149,7 @@ const Game={
     this.state='levelcomplete'; this.completeTimer=120;
   },
   nextLevel(){
-    if(this.levelIndex>=9){ this.state='victory'; Sound.stopMusic(); }
+    if(this.levelIndex>=14){ this.state='victory'; Sound.stopMusic(); }
     else { this.loadLevel(this.levelIndex+1); }
   },
   getBoss(){ return this.enemies.find(e=>e.isBoss && !e.dead); },
@@ -1044,6 +1171,9 @@ const Game={
     this.enemies=this.enemies.filter(e=>!e.dead);
     for(const d of this.drops)d.update(lv,p);
     this.drops=this.drops.filter(d=>d.life>0);
+    for(const pr of this.projectiles)pr.update(lv,this.enemies);
+    this.enemies=this.enemies.filter(e=>!e.dead);
+    this.projectiles=this.projectiles.filter(pr=>!pr.dead);
     // Apple collection
     for(const a of lv.apples){
       if(a.collected)continue;
@@ -1181,7 +1311,7 @@ const Game={
     ctx.textAlign='center'; ctx.fillStyle='#fff'; ctx.font='bold 72px Arial';
     ctx.fillText('SIEG!',W/2,230);
     ctx.font='bold 32px Arial';
-    ctx.fillText('Prinz Lucas hat alle 10 Level gemeistert!',W/2,310);
+    ctx.fillText('Prinz Lucas hat alle 15 Level gemeistert!',W/2,310);
     ctx.font='26px Arial'; ctx.fillText('Endpunktzahl: '+this.score,W/2,370);
     ctx.fillStyle='#1565c0'; this._restartBtn={x:W/2-130,y:420,w:260,h:56};
     roundRect(ctx,this._restartBtn.x,this._restartBtn.y,this._restartBtn.w,this._restartBtn.h,12); ctx.fill();
