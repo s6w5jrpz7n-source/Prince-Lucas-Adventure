@@ -137,7 +137,7 @@ const Sound = {
     if(!this.ctx)return;
     this.stopMusic();
     this.currentLevel=levelIdx; this.musicOn=true;
-    const boss=(levelIdx===4||levelIdx===9);
+    const boss=(levelIdx===4||levelIdx===9||levelIdx===13||levelIdx===14);
 
     // Note table (Hz)
     const N={
@@ -219,6 +219,41 @@ const Sound = {
         bas:[N.A3,N.A3,N._,N.A3,N.E3,N.E3,N._,N.E3, N.D3,N.D3,N._,N.D3,N.E3,N._,N.E3,N._,
              N.F3,N._,N.F3,N._,N.A3,N.A3,N._,N.A3, N.E3,N._,N.E3,N._,N.A3,N._,N._,N._],
         cho:[[N.A3,N.C4,N.E4],[N.D4,N.F4,N.A4],[N.E4,N.G4,N.B4],[N.F4,N.A4,N.C5]] },
+      // 10 Crystal Caves – mysterious, high, twinkling
+      { bpm:90, mt:'triangle', bt:'sine',
+        mel:[N.C6,N._,N._,N.G5,N._,N.A5,N._,N._, N.E5,N._,N.G5,N._,N.C6,N._,N._,N._,
+             N.B5,N._,N._,N.G5,N._,N.E5,N._,N._, N.A5,N._,N.C6,N._,N._,N._,N._,N._],
+        bas:[N.C3,N._,N._,N._,N.G3,N._,N._,N._, N.A3,N._,N._,N._,N.E3,N._,N._,N._,
+             N.F3,N._,N._,N._,N.C3,N._,N._,N._, N.G3,N._,N._,N._,N.C3,N._,N._,N._],
+        cho:[[N.C4,N.E4,N.G4],[N.A3,N.C4,N.E4],[N.F4,N.A4,N.C5],[N.G4,N.B4,N.D5]] },
+      // 11 Underwater – slow, whale-song, sustained
+      { bpm:95, mt:'sine', bt:'sine',
+        mel:[N.E5,N._,N._,N._,N.D5,N._,N._,N._, N.C5,N._,N._,N._,N.D5,N._,N._,N._,
+             N.G4,N._,N._,N._,N.A4,N._,N._,N._, N.C5,N._,N._,N._,N._,N._,N._,N._],
+        bas:[N.C3,N._,N._,N._,N._,N._,N._,N._, N.A3,N._,N._,N._,N._,N._,N._,N._,
+             N.F3,N._,N._,N._,N._,N._,N._,N._, N.G3,N._,N._,N._,N._,N._,N._,N._],
+        cho:[[N.C4,N.E4,N.G4],[N.A3,N.C4,N.E4],[N.F4,N.A4,N.C5],[N.G4,N.B4,N.D5]] },
+      // 12 Enchanted Forest – magical, flute-like, pentatonic
+      { bpm:108, mt:'triangle', bt:'sine',
+        mel:[N.G5,N.A5,N.C6,N.A5,N.G5,N.E5,N.D5,N._, N.E5,N.G5,N.A5,N.G5,N.E5,N.D5,N.C5,N._,
+             N.D5,N.E5,N.G5,N.A5,N.C6,N.A5,N.G5,N._, N.E5,N.D5,N.C5,N.D5,N.E5,N._,N._,N._],
+        bas:[N.C3,N._,N.G3,N._,N.C3,N._,N.G3,N._, N.A3,N._,N.E3,N._,N.A3,N._,N.E3,N._,
+             N.F3,N._,N.C3,N._,N.F3,N._,N.C3,N._, N.G3,N._,N.D3,N._,N.G3,N._,N._,N._],
+        cho:[[N.C4,N.E4,N.G4],[N.A3,N.C4,N.E4],[N.F4,N.A4,N.C5],[N.G4,N.B4,N.D5]] },
+      // 13 Volcano Summit – heavy, fast metal
+      { bpm:170, mt:'sawtooth', bt:'sawtooth',
+        mel:[N.E5,N.E5,N._,N.G5,N.F5,N._,N.E5,N.D5, N.C5,N._,N.C5,N.D5,N.E5,N._,N.D5,N._,
+             N.A4,N.A4,N._,N.C5,N.B4,N._,N.A4,N.G4, N.A4,N._,N.E5,N._,N.A4,N._,N._,N._],
+        bas:[N.A3,N.A3,N.A3,N._,N.E3,N.E3,N.E3,N._, N.F3,N.F3,N.F3,N._,N.E3,N.E3,N.E3,N._,
+             N.D3,N.D3,N.D3,N._,N.A3,N.A3,N.A3,N._, N.E3,N._,N.E3,N._,N.A3,N._,N._,N._],
+        cho:[[N.A3,N.C4,N.E4],[N.F3,N.A3,N.C4],[N.D4,N.F4,N.A4],[N.E4,N.G4,N.B4]] },
+      // 14 Final Boss – epic double-time, full orchestra
+      { bpm:180, mt:'sawtooth', bt:'sawtooth',
+        mel:[N.A5,N.C6,N.B5,N.A5,N.G5,N.A5,N.E5,N._, N.F5,N.G5,N.A5,N.B5,N.C6,N._,N.B5,N._,
+             N.A5,N.G5,N.F5,N.E5,N.D5,N.E5,N.F5,N.G5, N.A5,N.B5,N.C6,N.D5,N.A5,N._,N._,N._],
+        bas:[N.A3,N.A3,N.E3,N.E3,N.F3,N.F3,N.E3,N.E3, N.D3,N.D3,N.A3,N.A3,N.E3,N.E3,N.E3,N._,
+             N.A3,N.A3,N.F3,N.F3,N.G3,N.G3,N.E3,N.E3, N.A3,N.A3,N.E3,N.E3,N.A3,N._,N._,N._],
+        cho:[[N.A3,N.C4,N.E4],[N.F3,N.A3,N.C4],[N.G3,N.B3,N.D4],[N.E4,N.G4,N.B4]] },
     ];
 
     // Clamp to available themes
@@ -233,7 +268,7 @@ const Sound = {
       const bi=i%th.bas.length;
       const mn=th.mel[mi], bn=th.bas[bi];
       // melody
-      if(mn) this.tone(mn,th.mt,beat*0.88,(levelIdx===4||levelIdx===9)?0.055:0.048,t0);
+      if(mn) this.tone(mn,th.mt,beat*0.88,boss?0.055:0.048,t0);
       // bass
       if(bn) this.tone(bn,th.bt,beat*1.7,0.055,t0);
       // chord pads every 4 steps
@@ -992,7 +1027,9 @@ class Level {
     this.name=def.name; this.sky=def.sky; this.groundColor=def.ground; this.accent=def.accent;
     this.width = 5000 + idx*160;
     this.platforms=[]; this.enemySpawns=[]; this.decor=[];
+    this.tick=0;
     this.build();
+    this.buildScenery();
     this.goal={x:this.width-180, y:H-220, w:100, h:150};
     this.npc=new ShopNPC(200, H-40-56);
   }
@@ -1057,16 +1094,189 @@ class Level {
     }
     return {regular:['slime']};
   }
+  buildScenery(){
+    // seeded-ish random scenery elements per theme, stored once so they don't jitter
+    const W2=this.width; this.sc=[];
+    const R=(a,b)=>a+Math.random()*(b-a);
+    const push=o=>this.sc.push(o);
+    const horizon=H-40;
+    switch(this.idx){
+      case 0: // Green Forest: hills, trees, flowers
+        for(let i=0;i<14;i++) push({k:'tree',x:R(0,W2),y:horizon-R(0,30),s:R(0.7,1.5),par:0.55});
+        for(let i=0;i<40;i++) push({k:'flower',x:R(0,W2),y:horizon-R(2,16),c:pick(['#e91e63','#ffeb3b','#ff9800','#fff','#ba68c8']),par:0.8});
+        break;
+      case 1: // Rocky Mountains
+        for(let i=0;i<10;i++) push({k:'pine',x:R(0,W2),y:horizon-R(0,40),s:R(0.6,1.2),par:0.6});
+        break;
+      case 2: // Dark Cave: stalactites/mites, crystals, mushrooms
+        for(let i=0;i<22;i++) push({k:'stalac',x:R(0,W2),top:Math.random()<0.5,s:R(0.6,1.4),par:0.5});
+        for(let i=0;i<14;i++) push({k:'crystal',x:R(0,W2),y:horizon-R(4,20),c:pick(['#7c4dff','#18ffff','#69f0ae']),par:0.7});
+        for(let i=0;i<16;i++) push({k:'mushroom',x:R(0,W2),y:horizon-R(0,8),par:0.8});
+        break;
+      case 3: // Haunted Swamp
+        for(let i=0;i<12;i++) push({k:'deadtree',x:R(0,W2),y:horizon,s:R(0.8,1.4),par:0.55});
+        for(let i=0;i<18;i++) push({k:'wisp',x:R(0,W2),y:R(120,H-120),ph:R(0,7),par:0.7});
+        for(let i=0;i<10;i++) push({k:'fog',x:R(0,W2),y:R(180,H-100),ph:R(0,7),par:0.4});
+        break;
+      case 4: // Dragon's Lair
+        for(let i=0;i<14;i++) push({k:'skull',x:R(0,W2),y:horizon-R(0,6),par:0.7});
+        for(let i=0;i<10;i++) push({k:'claw',x:R(0,W2),y:R(120,360),par:0.5});
+        break;
+      case 5: // Ice Castle
+        for(let i=0;i<6;i++) push({k:'castle',x:R(0,W2),s:R(0.9,1.6),par:0.45});
+        for(let i=0;i<70;i++) push({k:'snow',x:R(0,W2),y:R(0,H),sp:R(0.4,1.2),sw:R(0,7),par:0.6});
+        break;
+      case 6: // Lava Fields
+        for(let i=0;i<6;i++) push({k:'volcano',x:R(0,W2),s:R(1,1.8),par:0.45});
+        for(let i=0;i<50;i++) push({k:'ember',x:R(0,W2),y:R(0,H),sp:R(0.5,1.5),par:0.7});
+        break;
+      case 7: // Sky Islands
+        for(let i=0;i<10;i++) push({k:'island',x:R(0,W2),y:R(120,380),s:R(0.6,1.3),par:0.45});
+        for(let i=0;i<16;i++) push({k:'cloud',x:R(0,W2),y:R(40,260),s:R(0.7,1.6),par:0.4});
+        for(let i=0;i<12;i++) push({k:'bird',x:R(0,W2),y:R(80,300),ph:R(0,7),par:0.6});
+        break;
+      case 8: // Ancient Ruins
+        for(let i=0;i<12;i++) push({k:'column',x:R(0,W2),s:R(0.8,1.5),par:0.5});
+        for(let i=0;i<6;i++) push({k:'arch',x:R(0,W2),s:R(0.9,1.4),par:0.45});
+        break;
+      case 9: // Dragon Fortress
+        for(let i=0;i<6;i++) push({k:'darktower',x:R(0,W2),s:R(1,1.7),par:0.45});
+        for(let i=0;i<10;i++) push({k:'darkcloud',x:R(0,W2),y:R(30,200),s:R(0.8,1.8),par:0.4});
+        break;
+      case 10: // Crystal Caves
+        for(let i=0;i<20;i++) push({k:'crystal',x:R(0,W2),y:R(100,H-80),c:pick(['#7b68ee','#9370db','#e040fb','#18ffff']),par:0.6});
+        for(let i=0;i<60;i++) push({k:'sparkle',x:R(0,W2),y:R(0,H),ph:R(0,7),par:0.7});
+        break;
+      case 11: // Underwater
+        for(let i=0;i<14;i++) push({k:'seaweed',x:R(0,W2),y:horizon,s:R(0.7,1.5),ph:R(0,7),par:0.6});
+        for(let i=0;i<60;i++) push({k:'bubble',x:R(0,W2),y:R(0,H),sp:R(0.3,1.1),sw:R(0,7),par:0.6});
+        for(let i=0;i<8;i++) push({k:'fish',x:R(0,W2),y:R(100,H-100),ph:R(0,7),par:0.5});
+        break;
+      case 12: // Enchanted Forest
+        for(let i=0;i<12;i++) push({k:'magictree',x:R(0,W2),y:horizon-R(0,20),s:R(0.8,1.5),par:0.55});
+        for(let i=0;i<50;i++) push({k:'firefly',x:R(0,W2),y:R(120,H-80),ph:R(0,7),par:0.7});
+        break;
+      case 13: // Volcano Summit
+        for(let i=0;i<6;i++) push({k:'volcano',x:R(0,W2),s:R(1.2,2),par:0.45});
+        for(let i=0;i<60;i++) push({k:'ember',x:R(0,W2),y:R(0,H),sp:R(0.6,1.8),par:0.7});
+        for(let i=0;i<8;i++) push({k:'ashcloud',x:R(0,W2),y:R(30,160),s:R(1,2),par:0.4});
+        break;
+      case 14: // Final Boss
+        for(let i=0;i<6;i++) push({k:'darktower',x:R(0,W2),s:R(1.2,2),par:0.45});
+        for(let i=0;i<20;i++) push({k:'meteor',x:R(0,W2),y:R(-50,H),sp:R(2,5),par:0.6});
+        for(let i=0;i<8;i++) push({k:'tear',x:R(0,W2),y:R(80,380),ph:R(0,7),par:0.5});
+        break;
+    }
+  }
   drawBg(g,cam){
+    this.tick++;
     const grad=g.createLinearGradient(0,0,0,H);
     grad.addColorStop(0,this.sky[0]); grad.addColorStop(1,this.sky[1]);
     g.fillStyle=grad; g.fillRect(0,0,W,H);
-    for(const d of this.decor){
-      const dx=d.x-cam*0.4;
-      if(dx<-80||dx>W+80)continue;
-      if(this.idx===2||this.idx===9){ g.fillStyle='rgba(255,255,255,'+(0.3+d.t*0.5)+')'; g.fillRect(dx,d.y,3,3); }
-      else if(this.idx===4||this.idx===6){ g.fillStyle='rgba(255,255,255,0.5)'; g.beginPath(); g.arc(dx,d.y,d.r,0,7); g.fill(); }
-      else { g.fillStyle='rgba(255,255,255,0.55)'; g.beginPath(); g.arc(dx,d.y,d.r,0,7); g.arc(dx+d.r,d.y,d.r*0.8,0,7); g.arc(dx-d.r,d.y,d.r*0.7,0,7); g.fill(); }
+    const horizon=H-40, t=this.tick;
+
+    // far parallax base layers per theme
+    if(this.idx===0){ this.drawHills(g,cam); }
+    if(this.idx===1){ this.drawMountains(g,cam); }
+    if(this.idx===4||this.idx===13){ // lava horizon glow
+      const lg=g.createLinearGradient(0,horizon-90,0,horizon); lg.addColorStop(0,'rgba(255,87,34,0)'); lg.addColorStop(1,'rgba(255,120,20,0.55)');
+      g.fillStyle=lg; g.fillRect(0,horizon-90,W,90);
+    }
+    if(this.idx===11){ // caustic light underwater
+      g.fillStyle='rgba(120,220,255,0.06)';
+      for(let i=0;i<6;i++){ const xx=((i*240 - cam*0.3 + t*0.4)%(W+240))-120; g.beginPath(); g.moveTo(xx,0); g.lineTo(xx+80,0); g.lineTo(xx+40,H); g.lineTo(xx-40,H); g.closePath(); g.fill(); }
+    }
+    if(this.idx===7){ // rainbow arc
+      const cols=['#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#8e24aa'];
+      g.save(); g.lineWidth=10;
+      for(let i=0;i<cols.length;i++){ g.strokeStyle=cols[i]; g.globalAlpha=0.4; g.beginPath(); g.arc(W*0.5-cam*0.3,H+120,260+i*10,Math.PI,Math.PI*2); g.stroke(); }
+      g.restore();
+    }
+
+    for(const d of this.sc){
+      const dx=d.x-cam*d.par;
+      const wrap=this.width;
+      let sx=dx; if(sx<-120) sx+=wrap; // simple wrap not needed; rely on world coords
+      if(sx<-160||sx>W+160)continue;
+      this.drawScenery(g,d,sx,t);
+    }
+  }
+  drawHills(g,cam){
+    const cols=['#7ab85a','#5a8f3a']; const horizon=H-40;
+    for(let l=0;l<2;l++){ g.fillStyle=cols[l]; const off=cam*(0.35+l*0.15);
+      g.beginPath(); g.moveTo(0,H);
+      for(let x=-100;x<=W+100;x+=80){ const wx=x+off; const y=horizon-40-l*30 - Math.sin((wx)*0.004+l)*30; g.lineTo(x,y); }
+      g.lineTo(W,H); g.closePath(); g.fill();
+    }
+  }
+  drawMountains(g,cam){
+    const shades=['#8a8f96','#6d7178','#54585e']; const horizon=H-40;
+    for(let l=0;l<3;l++){ g.fillStyle=shades[l]; const off=cam*(0.3+l*0.12);
+      g.beginPath(); g.moveTo(-100,horizon);
+      for(let x=-100;x<=W+200;x+=160){ const wx=x+off; const peak=horizon-120-l*20 - ((Math.sin(wx*0.01)*0.5+0.5)*120);
+        g.lineTo(x,horizon); g.lineTo(x+80,peak); }
+      g.lineTo(W+100,horizon); g.closePath(); g.fill();
+      // snow caps
+      g.fillStyle='rgba(255,255,255,0.85)';
+      for(let x=-100;x<=W+200;x+=160){ const wx=x+off; const peak=horizon-120-l*20 - ((Math.sin(wx*0.01)*0.5+0.5)*120);
+        g.beginPath(); g.moveTo(x+80,peak); g.lineTo(x+64,peak+24); g.lineTo(x+96,peak+24); g.closePath(); g.fill(); }
+    }
+  }
+  drawScenery(g,d,x,t){
+    const horizon=H-40;
+    switch(d.k){
+      case 'tree':{ const s=d.s; g.fillStyle='#5d4037'; g.fillRect(x-4*s,d.y-30*s,8*s,30*s);
+        g.fillStyle='#2e7d32'; g.beginPath(); g.arc(x,d.y-36*s,18*s,0,7); g.arc(x-14*s,d.y-26*s,13*s,0,7); g.arc(x+14*s,d.y-26*s,13*s,0,7); g.fill();
+        g.fillStyle='#43a047'; g.beginPath(); g.arc(x-4*s,d.y-42*s,11*s,0,7); g.fill(); break; }
+      case 'flower':{ g.strokeStyle='#2e7d32'; g.lineWidth=2; g.beginPath(); g.moveTo(x,d.y); g.lineTo(x,d.y-10); g.stroke();
+        g.fillStyle=d.c; for(let i=0;i<5;i++){ const a=i*2*Math.PI/5; g.beginPath(); g.arc(x+Math.cos(a)*3,d.y-12+Math.sin(a)*3,2.5,0,7); g.fill(); }
+        g.fillStyle='#ffeb3b'; g.beginPath(); g.arc(x,d.y-12,2,0,7); g.fill(); break; }
+      case 'pine':{ const s=d.s; g.fillStyle='#1b3a1b'; for(let i=0;i<3;i++){ g.beginPath(); g.moveTo(x,horizon-50*s+i*16*s); g.lineTo(x-14*s+i*3*s,horizon-26*s+i*16*s); g.lineTo(x+14*s-i*3*s,horizon-26*s+i*16*s); g.closePath(); g.fill(); }
+        g.fillStyle='#3e2723'; g.fillRect(x-2,horizon-12,4,12); break; }
+      case 'stalac':{ const s=d.s, len=40*s;
+        g.fillStyle='rgba(40,30,55,0.9)';
+        if(d.top){ g.beginPath(); g.moveTo(x-8*s,0); g.lineTo(x+8*s,0); g.lineTo(x,len); g.closePath(); g.fill(); }
+        else { g.beginPath(); g.moveTo(x-8*s,horizon); g.lineTo(x+8*s,horizon); g.lineTo(x,horizon-len); g.closePath(); g.fill(); } break; }
+      case 'crystal':{ g.save(); g.shadowColor=d.c; g.shadowBlur=14; g.fillStyle=d.c;
+        g.beginPath(); g.moveTo(x,d.y-16); g.lineTo(x+6,d.y-4); g.lineTo(x+4,d.y+8); g.lineTo(x-4,d.y+8); g.lineTo(x-6,d.y-4); g.closePath(); g.fill(); g.restore(); break; }
+      case 'mushroom':{ g.fillStyle='#cfd8dc'; g.fillRect(x-2,d.y-8,4,8); g.save(); g.shadowColor='#18ffff'; g.shadowBlur=10; g.fillStyle='#26c6da'; g.beginPath(); g.ellipse(x,d.y-8,7,4,0,Math.PI,0); g.fill(); g.restore(); break; }
+      case 'deadtree':{ const s=d.s; g.strokeStyle='#3e2a1a'; g.lineWidth=5*s; g.beginPath(); g.moveTo(x,horizon); g.lineTo(x,horizon-50*s);
+        g.moveTo(x,horizon-30*s); g.lineTo(x-16*s,horizon-46*s); g.moveTo(x,horizon-40*s); g.lineTo(x+18*s,horizon-52*s); g.stroke(); break; }
+      case 'wisp':{ const yy=d.y+Math.sin(t*0.03+d.ph)*16; g.save(); g.shadowColor='#aeffc8'; g.shadowBlur=16; g.fillStyle='rgba(170,255,200,0.8)'; g.beginPath(); g.arc(x,yy,4,0,7); g.fill(); g.restore(); break; }
+      case 'fog':{ const xx=x+Math.sin(t*0.01+d.ph)*30; g.fillStyle='rgba(200,210,200,0.10)'; g.beginPath(); g.ellipse(xx,d.y,90,22,0,0,7); g.fill(); break; }
+      case 'skull':{ g.fillStyle='#e0d8c0'; g.beginPath(); g.arc(x,d.y-6,8,0,7); g.fill(); g.fillRect(x-6,d.y-2,12,6);
+        g.fillStyle='#222'; g.beginPath(); g.arc(x-3,d.y-6,2,0,7); g.arc(x+3,d.y-6,2,0,7); g.fill(); break; }
+      case 'claw':{ g.strokeStyle='rgba(200,40,40,0.5)'; g.lineWidth=3; for(let i=0;i<3;i++){ g.beginPath(); g.moveTo(x+i*8,d.y); g.lineTo(x+i*8+12,d.y+40); g.stroke(); } break; }
+      case 'castle':{ const s=d.s; g.fillStyle='rgba(200,225,240,0.7)'; const bw=70*s, bh=120*s; g.fillRect(x-bw/2,horizon-bh,bw,bh);
+        for(let i=0;i<3;i++){ g.fillRect(x-bw/2+i*(bw/2.4),horizon-bh-18*s,16*s,18*s); }
+        g.fillStyle='rgba(150,190,220,0.7)'; g.fillRect(x-bw/4,horizon-bh,bw/2,bh); break; }
+      case 'snow':{ const yy=(d.y+t*d.sp)%(H+10); const xx=x+Math.sin(t*0.02+d.sw)*12; g.fillStyle='rgba(255,255,255,0.85)'; g.beginPath(); g.arc(xx,yy,d.sp*1.6,0,7); g.fill(); break; }
+      case 'volcano':{ const s=d.s; g.fillStyle='#2a0f08'; g.beginPath(); g.moveTo(x-60*s,horizon); g.lineTo(x,horizon-110*s); g.lineTo(x+60*s,horizon); g.closePath(); g.fill();
+        g.fillStyle='#ff5722'; g.beginPath(); g.moveTo(x-16*s,horizon-94*s); g.lineTo(x,horizon-110*s); g.lineTo(x+16*s,horizon-94*s); g.lineTo(x+10*s,horizon-70*s); g.lineTo(x-10*s,horizon-70*s); g.closePath(); g.fill(); break; }
+      case 'ember':{ const yy=(d.y-t*d.sp); const ny=((yy%H)+H)%H; const xx=x+Math.sin(t*0.04+d.sp*10)*6; g.fillStyle='rgba(255,140,30,0.8)'; g.beginPath(); g.arc(xx,ny,d.sp*1.4,0,7); g.fill(); break; }
+      case 'island':{ const s=d.s; g.fillStyle='#8d6e63'; g.beginPath(); g.moveTo(x-40*s,d.y); g.lineTo(x+40*s,d.y); g.lineTo(x,d.y+30*s); g.closePath(); g.fill();
+        g.fillStyle='#7cb342'; g.beginPath(); g.ellipse(x,d.y,40*s,10*s,0,0,7); g.fill(); break; }
+      case 'cloud':{ const s=d.s; g.fillStyle='rgba(255,255,255,0.85)'; g.beginPath(); g.arc(x,d.y,18*s,0,7); g.arc(x+18*s,d.y+4,14*s,0,7); g.arc(x-18*s,d.y+4,13*s,0,7); g.fill(); break; }
+      case 'bird':{ const xx=x+ (t*0.3)%300; const yy=d.y+Math.sin(t*0.04+d.ph)*8; g.strokeStyle='#37474f'; g.lineWidth=2; g.beginPath(); g.moveTo(xx-6,yy); g.lineTo(xx,yy-4); g.lineTo(xx+6,yy); g.stroke(); break; }
+      case 'column':{ const s=d.s; g.fillStyle='#bcae87'; g.fillRect(x-10*s,horizon-90*s,20*s,90*s);
+        g.fillStyle='#9c8f68'; g.fillRect(x-14*s,horizon-96*s,28*s,8*s); for(let i=0;i<4;i++) g.fillRect(x-7*s+i*4*s,horizon-90*s,2*s,90*s);
+        g.fillStyle=this.sky[1]; g.beginPath(); g.moveTo(x-12*s,horizon-96*s); g.lineTo(x+4*s,horizon-108*s); g.lineTo(x+14*s,horizon-96*s); g.closePath(); g.fill(); break; }
+      case 'arch':{ const s=d.s; g.strokeStyle='#9c8f68'; g.lineWidth=14*s; g.beginPath(); g.moveTo(x-30*s,horizon); g.lineTo(x-30*s,horizon-50*s); g.arc(x,horizon-50*s,30*s,Math.PI,0); g.lineTo(x+30*s,horizon); g.stroke();
+        g.strokeStyle='#3e6a2a'; g.lineWidth=2; for(let i=0;i<4;i++){ g.beginPath(); g.moveTo(x-30*s,horizon-10*s-i*12*s); g.lineTo(x-24*s,horizon-16*s-i*12*s); g.stroke(); } break; }
+      case 'darktower':{ const s=d.s; g.fillStyle='#1a0a2a'; g.fillRect(x-24*s,horizon-150*s,48*s,150*s);
+        g.beginPath(); g.moveTo(x-30*s,horizon-150*s); g.lineTo(x,horizon-190*s); g.lineTo(x+30*s,horizon-150*s); g.closePath(); g.fill();
+        if((t+Math.floor(x))%140<8){ g.strokeStyle='#cc00ff'; g.lineWidth=2; g.beginPath(); g.moveTo(x,horizon-160*s); g.lineTo(x-12*s,horizon-120*s); g.lineTo(x+6*s,horizon-110*s); g.stroke(); } break; }
+      case 'darkcloud':{ const s=d.s; g.fillStyle='rgba(60,20,70,0.7)'; g.beginPath(); g.arc(x,d.y,20*s,0,7); g.arc(x+20*s,d.y+4,16*s,0,7); g.arc(x-20*s,d.y+4,14*s,0,7); g.fill(); break; }
+      case 'sparkle':{ const a=0.3+0.5*Math.abs(Math.sin(t*0.05+d.ph)); g.fillStyle='rgba(224,64,251,'+a+')'; g.beginPath(); g.arc(x,d.y,2,0,7); g.fill(); break; }
+      case 'seaweed':{ const s=d.s; g.strokeStyle='#1b5e20'; g.lineWidth=5*s; g.beginPath(); g.moveTo(x,horizon); for(let i=1;i<=4;i++){ g.lineTo(x+Math.sin(t*0.03+d.ph+i)*8*s, horizon-i*14*s); } g.stroke(); break; }
+      case 'bubble':{ const yy=((d.y-t*d.sp)%H+H)%H; const xx=x+Math.sin(t*0.04+d.sw)*8; g.strokeStyle='rgba(200,240,255,0.6)'; g.lineWidth=1.5; g.beginPath(); g.arc(xx,yy,d.sp*2.2,0,7); g.stroke(); break; }
+      case 'fish':{ const xx=x+(t*0.5)%400; const yy=d.y+Math.sin(t*0.03+d.ph)*10; g.fillStyle='#ffab40'; g.beginPath(); g.ellipse(xx,yy,9,5,0,0,7); g.fill(); g.beginPath(); g.moveTo(xx-9,yy); g.lineTo(xx-16,yy-5); g.lineTo(xx-16,yy+5); g.closePath(); g.fill(); break; }
+      case 'magictree':{ const s=d.s; g.fillStyle='#2a1a3a'; g.fillRect(x-5*s,horizon-40*s,10*s,40*s);
+        g.save(); g.shadowColor='#69f0ae'; g.shadowBlur=18; g.fillStyle='#1de9b6'; g.beginPath(); g.arc(x,horizon-50*s,20*s,0,7); g.arc(x-14*s,horizon-38*s,12*s,0,7); g.arc(x+14*s,horizon-38*s,12*s,0,7); g.fill(); g.restore(); break; }
+      case 'firefly':{ const xx=x+Math.sin(t*0.02+d.ph)*20, yy=d.y+Math.cos(t*0.025+d.ph)*16; const a=0.4+0.5*Math.abs(Math.sin(t*0.08+d.ph)); g.save(); g.shadowColor='#ffeb3b'; g.shadowBlur=10; g.fillStyle='rgba(255,235,59,'+a+')'; g.beginPath(); g.arc(xx,yy,2.5,0,7); g.fill(); g.restore(); break; }
+      case 'ashcloud':{ const s=d.s; const xx=x+Math.sin(t*0.006+d.s)*20; g.fillStyle='rgba(50,40,40,0.5)'; g.beginPath(); g.arc(xx,d.y,24*s,0,7); g.arc(xx+22*s,d.y+5,18*s,0,7); g.arc(xx-22*s,d.y+5,16*s,0,7); g.fill(); break; }
+      case 'meteor':{ const yy=((d.y+t*d.sp)%(H+80)); const xx=x-yy*0.4; g.strokeStyle='rgba(255,120,40,0.7)'; g.lineWidth=3; g.beginPath(); g.moveTo(xx,yy); g.lineTo(xx+14,yy-22); g.stroke(); g.fillStyle='#ffd54f'; g.beginPath(); g.arc(xx,yy,3,0,7); g.fill(); break; }
+      case 'tear':{ const a=0.4+0.4*Math.abs(Math.sin(t*0.04+d.ph)); g.save(); g.shadowColor='#cc00ff'; g.shadowBlur=20; g.strokeStyle='rgba(204,0,255,'+a+')'; g.lineWidth=3; g.beginPath(); g.ellipse(x,d.y,6,30+Math.sin(t*0.05+d.ph)*8,0,0,7); g.stroke(); g.restore(); break; }
     }
   }
   drawPlatforms(g,cam){
@@ -1203,6 +1413,7 @@ const Game={
     lv.npc.draw(ctx,this.cam);
     for(const d of this.drops)d.draw(ctx,this.cam);
     for(const e of this.enemies)e.draw(ctx,this.cam);
+    for(const pr of this.projectiles)pr.draw(ctx,this.cam);
     this.player.draw(ctx,this.cam);
     ctx.textAlign='center'; ctx.font='bold 18px Arial';
     for(const f of floaters){ ctx.globalAlpha=clamp(f.life/30,0,1); ctx.fillStyle=f.color; ctx.fillText(f.text,f.x-this.cam,f.y); }
@@ -1232,6 +1443,10 @@ const Game={
     ctx.fillStyle='#90caf9'; ctx.fillText('VER: '+p.def,28,100);
     ctx.fillStyle='#ffd700'; ctx.fillText('Gold: '+Inventory.gold,170,76);
     ctx.fillStyle='#fff'; ctx.fillText('Punkte: '+this.score,170,100);
+    // ammo counts
+    ctx.font='bold 15px Arial';
+    ctx.fillStyle='#8d6e63'; ctx.fillText('🏹 '+Inventory.arrows,232,76);
+    ctx.fillStyle='#26c6da'; ctx.fillText('⚡ '+Inventory.bolts,232,100);
     // buff timer bar
     if(p.buffTimer>0){
       ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(16,128,308,16);
