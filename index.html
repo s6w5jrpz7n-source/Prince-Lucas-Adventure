@@ -95,21 +95,17 @@ function makeTransparent(img, threshold=240){
 const SPRITE_W=[418,501,365,344], SPRITE_H=[666,546,643,567];
 const Sprites={
   frames:[null,null,null,null], // 001=idle, 002=attack, 003=walk1, 004=walk2
-  loaded:0, total:4, failed:0,
+  loaded:0, total:4,
   load(){
     for(let i=0;i<4;i++){
       const img=new Image();
-      img.onload=()=>{
-        // Already RGBA — just draw to canvas (makeTransparent handles any leftover white)
-        this.frames[i]=makeTransparent(img);
-        this.loaded++;
-      };
-      img.onerror=()=>{ this.failed++; this.loaded++; };
+      img.onload=()=>{ this.frames[i]=img; this.loaded++; };
+      img.onerror=()=>{ this.loaded++; };
       img.src='sprites/00'+(i+1)+'.png';
     }
   },
-  ready(){ return this.loaded>=this.total && this.frames.some(f=>f!==null); },
-  get(idx){ return this.frames[idx]; } // 0=idle,1=attack,2=walk1,3=walk2
+  ready(){ return this.frames.some(f=>f!==null); },
+  get(idx){ return this.frames[idx]; }
 };
 Sprites.load();
 
