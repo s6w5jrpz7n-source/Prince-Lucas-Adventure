@@ -4,17 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Adventures of Prince Lucas</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
-  html,body{margin:0;padding:0;background:#111;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',Arial,sans-serif;}
-  #wrap{position:relative;width:1280px;height:720px;box-shadow:0 0 30px #000;}
-  canvas{display:block;background:#000;image-rendering:auto;width:1280px;height:720px;}
+  html,body{margin:0;padding:0;background:#111;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden;touch-action:none;}
+  #wrap{position:relative;box-shadow:0 0 30px #000;}
+  canvas{display:block;background:#000;image-rendering:pixelated;image-rendering:crisp-edges;}
   #hint{position:absolute;bottom:-22px;left:0;color:#888;font-size:12px;width:100%;text-align:center;}
+  /* Touch controls */
+  #touch-ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;display:none;}
+  #touch-ui.active{display:block;}
+  .tbtn{position:absolute;pointer-events:all;border-radius:50%;background:rgba(255,255,255,0.18);border:3px solid rgba(255,255,255,0.45);display:flex;align-items:center;justify-content:center;font-size:28px;user-select:none;-webkit-user-select:none;color:#fff;}
+  .tbtn:active{background:rgba(255,255,255,0.38);}
 </style>
 </head>
 <body>
 <div id="wrap">
   <canvas id="c" width="1280" height="720"></canvas>
   <div id="hint">Pfeile/WASD: Bewegen &amp; Springen (Doppelsprung) | Z/X: Angriff | I/Tab: Inventar | S: Shop | 1-5: Tränke</div>
+  <div id="touch-ui">
+    <div class="tbtn" id="tb-left"  style="bottom:18%;left:3%;width:13%;aspect-ratio:1">◀</div>
+    <div class="tbtn" id="tb-right" style="bottom:18%;left:17%;width:13%;aspect-ratio:1">▶</div>
+    <div class="tbtn" id="tb-jump"  style="bottom:35%;left:3%;width:13%;aspect-ratio:1">▲</div>
+    <div class="tbtn" id="tb-atk"   style="bottom:18%;right:3%;width:15%;aspect-ratio:1;font-size:32px">⚔</div>
+    <div class="tbtn" id="tb-inv"   style="bottom:38%;right:3%;width:12%;aspect-ratio:1;font-size:22px">🎒</div>
+    <div class="tbtn" id="tb-shop"  style="bottom:55%;right:3%;width:12%;aspect-ratio:1;font-size:22px">🛒</div>
+  </div>
 </div>
 <script>
 "use strict";
@@ -1899,6 +1914,77 @@ canvas.addEventListener('click',e=>{
     else if(Game._shopBtn&&inRect(mx,my,Game._shopBtn))Game.openShop(false);
   }
 });
+
+// ---------- Responsive scaling ----------
+function resizeCanvas(){
+  const wrap=document.getElementById('wrap');
+  const scaleX=window.innerWidth/1280, scaleY=window.innerHeight/720;
+  const scale=Math.min(scaleX,scaleY);
+  const w=Math.round(1280*scale), h=Math.round(720*scale);
+  canvas.style.width=w+'px'; canvas.style.height=h+'px';
+  wrap.style.width=w+'px'; wrap.style.height=h+'px';
+}
+window.addEventListener('resize',resizeCanvas);
+resizeCanvas();
+
+// ---------- Touch controls ----------
+(function(){
+  const isTouchDevice=('ontouchstart' in window)||(navigator.maxTouchPoints>0);
+  if(!isTouchDevice) return;
+  document.getElementById('touch-ui').classList.add('active');
+  document.getElementById('hint').style.display='none';
+
+  function bindBtn(id, onDown, onUp){
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('touchstart',e=>{e.preventDefault(); ensureAudio(); onDown();},{passive:false});
+    el.addEventListener('touchend',  e=>{e.preventDefault(); onUp();},{passive:false});
+    el.addEventListener('touchcancel',e=>{e.preventDefault(); onUp();},{passive:false});
+  }
+
+  bindBtn('tb-left',
+    ()=>{ keys.left=true; },
+    ()=>{ keys.left=false; }
+  );
+  bindBtn('tb-right',
+    ()=>{ keys.right=true; },
+    ()=>{ keys.right=false; }
+  );
+  bindBtn('tb-jump',
+    ()=>{ if(Game.state==='play') Game.player.jump();
+          else if(Game.state==='menu'||Game.state==='gameover'||Game.state==='victory') Game.startGame(); },
+    ()=>{}
+  );
+  bindBtn('tb-atk',
+    ()=>{ if(Game.state==='play') Game.player.attack(); },
+    ()=>{}
+  );
+  bindBtn('tb-inv',
+    ()=>{
+      if(Game.state==='play') Game.state='inventory';
+      else if(Game.state==='inventory') Game.state='play';
+    },
+    ()=>{}
+  );
+  bindBtn('tb-shop',
+    ()=>{ if(Game.state==='play') Game.openShop(false); else if(Game.state==='shop') Game.closeShop(); },
+    ()=>{}
+  );
+
+  // Tap on canvas for menu/levelstart buttons
+  canvas.addEventListener('touchstart',e=>{
+    ensureAudio();
+    const t=e.touches[0];
+    const r=canvas.getBoundingClientRect();
+    const mx=(t.clientX-r.left)*(W/r.width), my=(t.clientY-r.top)*(H/r.height);
+    if(Game.state==='menu'){ if(Game._startBtn&&inRect(mx,my,Game._startBtn)) Game.startGame(); }
+    else if(Game.state==='gameover'||Game.state==='victory'){ if(Game._restartBtn&&inRect(mx,my,Game._restartBtn)) Game.startGame(); }
+    else if(Game.state==='levelstart'){ Game.state='play'; }
+    else if(Game.state==='levelcomplete'){ Game.nextLevel(); }
+    else if(Game.state==='inventory'){ Game.clickInventory(mx,my); }
+    else if(Game.state==='shop'){ Game.clickShop(mx,my); }
+  },{passive:true});
+})();
 
 // ---------- Loop ----------
 function loop(){ Game.update(); Game.render(); requestAnimationFrame(loop); }
